@@ -8,147 +8,109 @@ import ProtectedRoute from "@/components/ProtectedRoute"
 export default function AddSale() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-
   const [form, setForm] = useState({
     date: "",
     customer: "",
     product: "",
     cost_price: "",
     sales_price: "",
-    status: "Paid",
-    outstanding: ""
+    status: "Unpaid",
+    outstanding: "",
+    serial_number: "",
+    imei: ""
   })
 
-  const handleChange = (field: string, value: string) => {
-    setForm({ ...form, [field]: value })
-  }
-
   const handleSubmit = async () => {
-    if (!form.date || !form.customer || !form.product || !form.sales_price) {
-      alert("Please fill all required fields")
-      return
-    }
-
     setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      alert("Not authenticated")
-      setLoading(false)
-      return
-    }
-
-    const outstanding =
-      form.status === "Paid"
-        ? 0
-        : form.status === "Unpaid"
-        ? Number(form.sales_price)
-        : Number(form.outstanding || 0)
-
-    const { error } = await supabase.from("sales").insert({
-      user_id: user.id,
-      date: form.date,
-      customer: form.customer,
-      product: form.product,
-      cost_price: Number(form.cost_price || 0),
-      sales_price: Number(form.sales_price),
-      status: form.status,
-      outstanding
-    })
+    const { error } = await supabase.from("sales").insert([
+      { ...form, user_id: user.id }
+    ])
 
     setLoading(false)
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    router.push("/sales")
+    if (!error) router.push("/")
   }
 
   return (
     <ProtectedRoute>
-      <div className="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-sm">
-        <h2 className="text-lg font-semibold mb-6 text-slate-900">
-          Add New Sale
-        </h2>
+      <div className="min-h-screen bg-gray-50 py-10 px-4">
+        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12 space-y-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Add New Sale</h1>
+          <p className="text-sm text-gray-500">Fill in the sale details</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <input
-            type="date"
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.date}
-            onChange={(e) => handleChange("date", e.target.value)}
-          />
-
-          <input
-            placeholder="Customer"
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.customer}
-            onChange={(e) => handleChange("customer", e.target.value)}
-          />
-
-          <input
-            placeholder="Product"
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.product}
-            onChange={(e) => handleChange("product", e.target.value)}
-          />
-
-          <input
-            type="number"
-            placeholder="Cost Price"
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.cost_price}
-            onChange={(e) => handleChange("cost_price", e.target.value)}
-          />
-
-          <input
-            type="number"
-            placeholder="Sales Price"
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.sales_price}
-            onChange={(e) => handleChange("sales_price", e.target.value)}
-          />
-
-          <select
-            className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            value={form.status}
-            onChange={(e) => handleChange("status", e.target.value)}
-          >
-            <option value="Paid">Paid</option>
-            <option value="Part Payment">Part Payment</option>
-            <option value="Unpaid">Unpaid</option>
-          </select>
-
-          {form.status === "Part Payment" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input
-              type="number"
-              placeholder="Outstanding"
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 sm:col-span-2"
-              value={form.outstanding}
-              onChange={(e) => handleChange("outstanding", e.target.value)}
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
             />
-          )}
-        </div>
+            <input
+              placeholder="Customer"
+              value={form.customer}
+              onChange={(e) => setForm({ ...form, customer: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+            <input
+              placeholder="Product"
+              value={form.product}
+              onChange={(e) => setForm({ ...form, product: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+            <input
+              placeholder="Cost Price"
+              type="number"
+              value={form.cost_price}
+              onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+            <input
+              placeholder="Sales Price"
+              type="number"
+              value={form.sales_price}
+              onChange={(e) => setForm({ ...form, sales_price: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+            <input
+              placeholder="Outstanding Amount"
+              type="number"
+              value={form.outstanding}
+              onChange={(e) => setForm({ ...form, outstanding: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
 
-        <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
-          <button
-            onClick={() => router.back()}
-            className="w-full sm:w-auto border border-slate-300 rounded-md px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 transition"
-          >
-            Cancel
-          </button>
+            {/* New fields */}
+            <input
+              placeholder="Device Serial Number (S/N)"
+              value={form.serial_number}
+              onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+            <input
+              placeholder="Device IMEI"
+              value={form.imei}
+              onChange={(e) => setForm({ ...form, imei: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            />
+
+            <select
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-300 transition"
+            >
+              <option value="Unpaid">Unpaid</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </div>
 
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full sm:w-auto bg-slate-900 text-white rounded-md px-4 py-2 text-sm disabled:opacity-50 hover:bg-black transition"
+            className="w-full bg-black text-white py-2 rounded hover:bg-gray-900 transition disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Save Sale"}
+            {loading ? "Saving..." : "Add Sale"}
           </button>
         </div>
       </div>

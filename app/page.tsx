@@ -158,6 +158,8 @@ const [profile, setProfile] = useState<{
                   <th className="py-3 px-4 font-medium text-left">Date</th>
                   <th className="py-3 px-4 font-medium text-left">Customer</th>
                   <th className="py-3 px-4 font-medium text-left">Product</th>
+                  <th className="py-3 px-4 font-medium text-left">S/N</th>
+                  <th className="py-3 px-4 font-medium text-left">IMEI</th>
                   <th className="py-3 px-4 font-medium text-left">Amount</th>
                   <th className="py-3 px-4 font-medium text-left">Status</th>
                 </tr>
@@ -172,6 +174,8 @@ const [profile, setProfile] = useState<{
                     <td className="py-3 px-4 text-slate-700">{sale.date}</td>
                     <td className="py-3 px-4 font-medium text-slate-900">{sale.customer}</td>
                     <td className="py-3 px-4 text-slate-700">{sale.product}</td>
+                    <td className="py-3 px-4 text-gray-700">{sale.serial_number || "-"}</td>
+                    <td className="py-3 px-4 text-gray-700">{sale.imei || "-"}</td>
                     <td className="py-3 px-4 font-medium text-slate-900">
                       ₦{Number(sale.sales_price).toLocaleString()}
                     </td>

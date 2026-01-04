@@ -53,11 +53,11 @@ export default function EditSale() {
 
         {/* Form Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {["date","customer","product","cost_price","sales_price"].map((field) => (
+          {["date","customer","product","cost_price","sales_price","serial_number","imei"].map((field) => (
             <div key={field} className="flex flex-col">
               <label className="text-sm text-slate-600 mb-1 capitalize">{field.replace("_", " ")}</label>
               <input
-                value={form[field]}
+                value={form[field] || ""}
                 className="border border-slate-200 rounded-lg p-2 text-slate-900 focus:ring-1 focus:ring-black focus:outline-none"
                 onChange={(e) =>
                   setForm({ ...form, [field]: e.target.value })

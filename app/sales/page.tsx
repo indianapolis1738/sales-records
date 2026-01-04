@@ -26,7 +26,7 @@ export default function Sales() {
 
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-50">
+        <h2 className="text-xl font-semibold text-gray-900">
           Sales Records
         </h2>
         <a
@@ -58,7 +58,7 @@ export default function Sales() {
               <tr
                 key={sale.id}
                 className="border-t border-slate-200 hover:bg-slate-50 transition cursor-pointer"
-                onClick={() => window.location.href = `/sales/${sale.id}`}
+                onClick={() => window.location.href = `/sales/${sale.id}/info`}
               >
                 <td className="py-3 px-4 text-slate-700">{sale.date}</td>
                 <td className="py-3 px-4 font-medium text-slate-900">{sale.customer}</td>
@@ -123,7 +123,7 @@ export default function Sales() {
         {sales.map((sale) => (
           <div
             key={sale.id}
-            onClick={() => window.location.href = `/sales/${sale.id}`}
+            onClick={() => window.location.href = `/sales/${sale.id}/info`}
             className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 cursor-pointer hover:bg-slate-50 transition"
           >
             <div className="flex justify-between items-start">

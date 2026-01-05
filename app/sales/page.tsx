@@ -26,7 +26,7 @@ export default function Sales() {
 
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-semibold text-gray-200">
           Sales Records
         </h2>
         <a

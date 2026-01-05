@@ -71,7 +71,7 @@ export default function SaleInfo() {
     <ProtectedRoute>
       <div className="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
         {/* Header */}
-        <h2 className="text-2xl font-semibold text-slate-900">Sale Information</h2>
+        <h2 className="text-2xl font-semibold text-gray-100">Sale Information</h2>
 
         {/* Sale Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -103,7 +103,7 @@ export default function SaleInfo() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <button
-            onClick={() => router.push(`/sales/${sale.id}/edit`)}
+            onClick={() => router.push(`/sales/${sale.id}`)}
             className="border border-slate-300 px-4 py-2 rounded-lg text-sm text-slate-900 hover:bg-slate-50 transition"
           >
             Edit

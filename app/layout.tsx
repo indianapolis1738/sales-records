@@ -34,6 +34,15 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        {/* PWA Manifest & meta */}
+        <title>Kript Dashboard</title>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+      </head>
       <body className="bg-slate-50 font-sans text-slate-900 min-h-screen flex flex-col">
         <ProtectedRoute>
           {/* Main content */}

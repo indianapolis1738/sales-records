@@ -3,17 +3,14 @@
 import { useState } from "react"
 import { signIn, signUp } from "@/lib/auth"
 import { useRouter } from "next/navigation"
+import { AnimatePresence, motion } from "framer-motion"
 
 export default function AuthPage() {
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
 
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: ""
-  })
-
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [signupForm, setSignupForm] = useState({
     name: "",
     email: "",
@@ -23,13 +20,9 @@ export default function AuthPage() {
   })
 
   // ------------------ Handlers ------------------
-
   const handleLogin = async () => {
     const { email, password } = loginForm
-    if (!email || !password) {
-      alert("Please fill all fields")
-      return
-    }
+    if (!email || !password) return alert("Please fill all fields")
     setLoading(true)
     const { error } = await signIn(email, password)
     setLoading(false)
@@ -39,15 +32,9 @@ export default function AuthPage() {
 
   const handleSignup = async () => {
     const { name, email, password, confirmPassword, phone } = signupForm
-    if (!name || !email || !password || !confirmPassword) {
-      alert("Please fill all required fields")
-      return
-    }
-    if (password !== confirmPassword) {
-      alert("Passwords do not match")
-      return
-    }
-
+    if (!name || !email || !password || !confirmPassword)
+      return alert("Please fill all required fields")
+    if (password !== confirmPassword) return alert("Passwords do not match")
     setLoading(true)
     const { error } = await signUp(email, password, { name, phone })
     setLoading(false)
@@ -56,23 +43,26 @@ export default function AuthPage() {
   }
 
   // ------------------ UI ------------------
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-md p-6 sm:p-8 rounded-2xl shadow-md transition-colors duration-300">
         {/* Tabs */}
-        <div className="flex justify-center mb-6 border-b border-slate-200">
+        <div className="flex justify-center mb-6 border-b border-slate-200 dark:border-slate-700">
           <button
-            className={`px-4 py-2 text-sm font-medium ${
-              isLogin ? "border-b-2 border-slate-900 text-slate-900" : "text-slate-500"
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              isLogin
+                ? "border-b-2 border-slate-900 dark:border-white text-slate-900 dark:text-white"
+                : "text-slate-400 dark:text-slate-300"
             }`}
             onClick={() => setIsLogin(true)}
           >
             Login
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium ${
-              !isLogin ? "border-b-2 border-slate-900 text-slate-900" : "text-slate-500"
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              !isLogin
+                ? "border-b-2 border-slate-900 dark:border-white text-slate-900 dark:text-white"
+                : "text-slate-400 dark:text-slate-300"
             }`}
             onClick={() => setIsLogin(false)}
           >
@@ -80,96 +70,107 @@ export default function AuthPage() {
           </button>
         </div>
 
-        {/* Login Form */}
-        {isLogin && (
-          <div className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={loginForm.email}
-              onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <button
-              onClick={handleLogin}
-              disabled={loading}
-              className="mt-4 w-full bg-slate-900 text-white py-3 rounded-md text-sm hover:bg-black transition disabled:opacity-50"
+        {/* Animated Forms */}
+        <AnimatePresence exitBeforeEnter>
+          {isLogin ? (
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-3"
             >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </div>
-        )}
-
-        {/* Signup Form */}
-        {!isLogin && (
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={signupForm.name}
-              onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <input
-              type="email"
-              placeholder="Email"
-              value={signupForm.email}
-              onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <input
-              type="text"
-              placeholder="Phone (Optional)"
-              value={signupForm.phone}
-              onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={signupForm.password}
-              onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={signupForm.confirmPassword}
-              onChange={(e) =>
-                setSignupForm({ ...signupForm, confirmPassword: e.target.value })
-              }
-              className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-
-            <button
-              onClick={handleSignup}
-              disabled={loading}
-              className="mt-4 w-full bg-slate-900 text-white py-3 rounded-md text-sm hover:bg-black transition disabled:opacity-50"
+              <InputField
+                placeholder="Email"
+                type="email"
+                value={loginForm.email}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, email: e.target.value })
+                }
+              />
+              <InputField
+                placeholder="Password"
+                type="password"
+                value={loginForm.password}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, password: e.target.value })
+                }
+              />
+              <button
+                onClick={handleLogin}
+                disabled={loading}
+                className="mt-2 w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-md text-sm hover:bg-black dark:hover:bg-slate-200 transition disabled:opacity-50"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="signup"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-3"
             >
-              {loading ? "Creating account..." : "Sign Up"}
-            </button>
-          </div>
-        )}
+              <InputField
+                placeholder="Full Name"
+                value={signupForm.name}
+                onChange={(e) =>
+                  setSignupForm({ ...signupForm, name: e.target.value })
+                }
+              />
+              <InputField
+                placeholder="Email"
+                type="email"
+                value={signupForm.email}
+                onChange={(e) =>
+                  setSignupForm({ ...signupForm, email: e.target.value })
+                }
+              />
+              <InputField
+                placeholder="Phone (Optional)"
+                value={signupForm.phone}
+                onChange={(e) =>
+                  setSignupForm({ ...signupForm, phone: e.target.value })
+                }
+              />
+              <InputField
+                placeholder="Password"
+                type="password"
+                value={signupForm.password}
+                onChange={(e) =>
+                  setSignupForm({ ...signupForm, password: e.target.value })
+                }
+              />
+              <InputField
+                placeholder="Confirm Password"
+                type="password"
+                value={signupForm.confirmPassword}
+                onChange={(e) =>
+                  setSignupForm({
+                    ...signupForm,
+                    confirmPassword: e.target.value
+                  })
+                }
+              />
+              <button
+                onClick={handleSignup}
+                disabled={loading}
+                className="mt-2 w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-md text-sm hover:bg-black dark:hover:bg-slate-200 transition disabled:opacity-50"
+              >
+                {loading ? "Creating account..." : "Sign Up"}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <p className="mt-4 text-xs text-slate-500 text-center">
-          {isLogin
-            ? "Don't have an account?"
-            : "Already have an account?"}{" "}
+        {/* Switch Login/Signup */}
+        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 text-center">
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
-            className="underline text-slate-900 font-medium"
+            className="underline text-slate-900 dark:text-white font-medium"
             onClick={() => setIsLogin(!isLogin)}
           >
             {isLogin ? "Sign Up" : "Login"}
@@ -177,5 +178,28 @@ export default function AuthPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+// ------------------ Input Component ------------------
+function InputField({
+  placeholder,
+  type = "text",
+  value,
+  onChange
+}: {
+  placeholder: string
+  type?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) {
+  return (
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      className="w-full border border-slate-200 dark:border-slate-600 rounded-md p-3 text-sm text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 placeholder-slate-400 dark:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 transition"
+    />
   )
 }

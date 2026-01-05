@@ -5,9 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import "./globals.css"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { BarChart, BarChart4, Calculator, Home, Plus, User } from "lucide-react"
+import { BarChart, Calculator, Home, Plus, User } from "lucide-react"
 import IOSInstallPrompt from "@/components/IOSInstallPrompt"
-// import { href } from "react-router-dom"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

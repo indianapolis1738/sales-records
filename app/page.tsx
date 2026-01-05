@@ -90,7 +90,7 @@ export default function Dashboard() {
         {/* Profile Header */}
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center shadow-sm">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
               Welcome, {profile.full_name || "User"}!
             </h1>
             {profile.business_name && (
@@ -214,7 +214,7 @@ function Metric({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
       <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{title}</p>
-      <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{value}</p>
+      <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   )
 }

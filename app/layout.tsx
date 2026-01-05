@@ -5,8 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import "./globals.css"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { BarChart, Home, Plus, User } from "lucide-react"
+import { BarChart, BarChart4, Calculator, Home, Plus, User } from "lucide-react"
 import IOSInstallPrompt from "@/components/IOSInstallPrompt"
+import { href } from "react-router-dom"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,11 +28,12 @@ export default function RootLayout({
     { name: "Home", href: "/", icon: <Home size={20} /> },
     { name: "Sales", href: "/sales", icon: <BarChart size={20} /> },
     { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
+    { name: "Tax", href: "/tax", icon: <Calculator size={20} /> },
     { name: "Profile", href: "/profile", icon: <User size={20} /> },
   ]
 
   // Only show bottom tab on these paths
-  const showBottomTab = ["/", "/sales", "/sales/new", "/profile"].includes(pathname)
+  const showBottomTab = ["/", "/sales", "/sales/new", "/profile", "/tax"].includes(pathname)
 
   return (
     <html lang="en" className="scroll-smooth">

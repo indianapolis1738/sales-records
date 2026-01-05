@@ -71,7 +71,7 @@ export default function AuthPage() {
         </div>
 
         {/* Animated Forms */}
-        <AnimatePresence exitBeforeEnter>
+        <AnimatePresence>
           {isLogin ? (
             <motion.div
               key="login"

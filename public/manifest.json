@@ -1,7 +1,7 @@
 {
-    "name": "Sales Records App",
-    "short_name": "SalesRecords",
-    "description": "Manage your sales, profiles and receipts with ease",
+    "name": "Flowly-Sales Records",
+    "short_name": "Flowly",
+    "description": "Manage your sales, taxes and receipts with ease",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

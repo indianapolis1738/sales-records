@@ -4,8 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import "./globals.css"
-import ProtectedRoute from "@/components/ProtectedRoute"
-import { BarChart, Calculator, Home, Plus, User } from "lucide-react"
+import { BarChart, Calculator, Dot, DotSquare, Home, Plus, User } from "lucide-react"
 import IOSInstallPrompt from "@/components/IOSInstallPrompt"
 
 const geistSans = Geist({
@@ -28,11 +27,11 @@ export default function RootLayout({
     { name: "Sales", href: "/sales", icon: <BarChart size={20} /> },
     { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
     { name: "Tax", href: "/tax", icon: <Calculator size={20} /> },
-    { name: "Profile", href: "/profile", icon: <User size={20} /> },
+    { name: "More", href: "/more", icon: <DotSquare size={20} /> },
   ]
 
   // Only show bottom tab on these paths
-  const showBottomTab = ["/", "/sales", "/sales/new", "/profile", "/tax"].includes(pathname)
+  const showBottomTab = ["/", "/sales", "/sales/new", "/more", "/tax"].includes(pathname)
 
   return (
     <html lang="en" className="scroll-smooth">
@@ -52,7 +51,6 @@ export default function RootLayout({
           ${geistSans.variable} ${geistMono.variable}
         `}
       >
-        <ProtectedRoute>
           {/* Main content */}
           <main className="flex-1 p-4 sm:p-6 md:p-10 mb-20">
             {children}
@@ -83,8 +81,7 @@ export default function RootLayout({
           )}
 
           {/* iOS Install Prompt */}
-          <IOSInstallPrompt />
-        </ProtectedRoute>
+          <IOSInstallPrompt />\
       </body>
     </html>
   )

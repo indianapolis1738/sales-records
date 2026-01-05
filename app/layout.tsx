@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import "./globals.css"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { BarChart, Home, Plus, User } from "lucide-react"
+import IOSInstallPrompt from "@/components/IOSInstallPrompt"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,12 +31,11 @@ export default function RootLayout({
   ]
 
   // Only show bottom tab on these paths
-  const showBottomTab = ["/","/sales", "/sales/new", "/profile"].includes(pathname)
+  const showBottomTab = ["/", "/sales", "/sales/new", "/profile"].includes(pathname)
 
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
-        {/* PWA Manifest & meta */}
         <title>Kript Dashboard</title>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
@@ -43,23 +43,35 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
       </head>
-      <body className="bg-slate-50 font-sans text-slate-900 min-h-screen flex flex-col">
+      <body
+        className={`
+          bg-gray-50 dark:bg-neutral-950 
+          text-gray-900 dark:text-gray-100
+          font-sans min-h-screen flex flex-col
+          ${geistSans.variable} ${geistMono.variable}
+        `}
+      >
         <ProtectedRoute>
           {/* Main content */}
-          <main className="flex-1 p-4 mb-18">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 md:p-10 mb-20">
+            {children}
+          </main>
 
-          {/* Bottom Tabs */}
+          {/* Bottom Navigation */}
           {showBottomTab && (
-            <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center h-16 shadow-inner">
+            <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-700 flex justify-around items-center h-16 shadow-inner">
               {tabs.map((tab) => {
                 const isActive = pathname === tab.href
                 return (
                   <Link
                     key={tab.name}
                     href={tab.href}
-                    className={`flex flex-col items-center justify-center text-sm transition-colors ${
-                      isActive ? "text-black font-semibold" : "text-slate-400"
-                    }`}
+                    className={`
+                      flex flex-col items-center justify-center text-xs sm:text-sm transition-colors
+                      ${isActive 
+                        ? "text-black dark:text-white font-semibold" 
+                        : "text-gray-400 dark:text-gray-500"}
+                    `}
                   >
                     {tab.icon}
                     <span className="mt-1">{tab.name}</span>
@@ -68,6 +80,9 @@ export default function RootLayout({
               })}
             </nav>
           )}
+
+          {/* iOS Install Prompt */}
+          <IOSInstallPrompt />
         </ProtectedRoute>
       </body>
     </html>

@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import StatusBadge from "@/components/StatusBadge"
-import { Plus } from "lucide-react"
+import { Plus, Download } from "lucide-react"
+import * as XLSX from "xlsx"
 
 export default function Sales() {
   const [sales, setSales] = useState<any[]>([])
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -21,35 +23,72 @@ export default function Sales() {
     fetchSales()
   }, [])
 
+  const exportToExcel = () => {
+    setExporting(true)
+
+    const formattedData = sales.map((sale) => ({
+      Date: sale.date,
+      Customer: sale.customer,
+      Product: sale.product,
+      "Cost Price": Number(sale.cost_price),
+      "Sales Price": Number(sale.sales_price),
+      Profit: Number(sale.sales_price) - Number(sale.cost_price),
+      Status: sale.status,
+      Outstanding: Number(sale.outstanding),
+      "Created At": new Date(sale.created_at).toLocaleString()
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales")
+
+    XLSX.writeFile(workbook, "sales-records.xlsx")
+
+    setExporting(false)
+  }
+
   return (
-    <div className="max-w-7xl mx-auto md:px-4 sm:px-1 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto md:px-4 sm:px-2 py-6 space-y-6 text-gray-900 dark:text-gray-100">
 
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-200">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-4">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
           Sales Records
         </h2>
-        <a
-          href="/sales/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-slate-900 transition"
-        >
-          <Plus size={16} />
-          Add Sale
-        </a>
+
+        <div className="flex gap-2">
+          <button
+        onClick={exportToExcel}
+        disabled={exporting || sales.length === 0}
+        className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition disabled:opacity-50"
+          >
+        <Download size={16} />
+        {exporting ? "Exporting..." : "Export"}
+          </button>
+
+          <a
+        href="/sales/new"
+        className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg text-sm hover:bg-gray-700 dark:hover:bg-gray-200 transition"
+          >
+        <Plus size={16} />
+        Add Sale
+          </a>
+        </div>
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         <table className="w-full text-sm table-fixed">
-          <thead className="text-slate-600">
+          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
             <tr>
-              <th className="py-3 px-4 font-medium text-left">Date</th>
-              <th className="py-3 px-4 font-medium text-left">Customer</th>
-              <th className="py-3 px-4 font-medium text-left">Product</th>
-              <th className="py-3 px-4 font-medium text-left">Sales</th>
-              <th className="py-3 px-4 font-medium text-left">Status</th>
-              <th className="py-3 px-4 font-medium text-left">Outstanding</th>
-              <th className="py-3 px-4 font-medium text-left">Action</th>
+              <th className="py-3 px-4 text-left">Date</th>
+              <th className="py-3 px-4 text-left">Customer</th>
+              <th className="py-3 px-4 text-left">Product</th>
+              <th className="py-3 px-4 text-left">Sales</th>
+              <th className="py-3 px-4 text-left">Status</th>
+              <th className="py-3 px-4 text-left">Outstanding</th>
+              <th className="py-3 px-4 text-left">Action</th>
             </tr>
           </thead>
 
@@ -57,54 +96,39 @@ export default function Sales() {
             {sales.map((sale) => (
               <tr
                 key={sale.id}
-                className="border-t border-slate-200 hover:bg-slate-50 transition cursor-pointer"
+                className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                 onClick={() => window.location.href = `/sales/${sale.id}/info`}
               >
-                <td className="py-3 px-4 text-slate-700">{sale.date}</td>
-                <td className="py-3 px-4 font-medium text-slate-900">{sale.customer}</td>
-                <td className="py-3 px-4 text-slate-700">{sale.product}</td>
-                <td className="py-3 px-4 font-medium text-slate-900">₦{Number(sale.sales_price).toLocaleString()}</td>
+                <td className="py-3 px-4">{sale.date}</td>
+                <td className="py-3 px-4 font-medium">{sale.customer}</td>
+                <td className="py-3 px-4">{sale.product}</td>
+                <td className="py-3 px-4 font-medium">
+                  ₦{Number(sale.sales_price).toLocaleString()}
+                </td>
                 <td className="py-3 px-4">
                   <StatusBadge status={sale.status} />
                 </td>
-                <td className="py-3 px-4 text-slate-900">₦{Number(sale.outstanding).toLocaleString()}</td>
-                <td className="py-3 px-4 flex gap-2">
+                <td className="py-3 px-4">
+                  ₦{Number(sale.outstanding).toLocaleString()}
+                </td>
+                <td className="py-3 px-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       window.location.href = `/sales/${sale.id}`
                     }}
-                    className="text-sm underline text-slate-700 hover:text-slate-900 transition"
+                    className="text-sm underline hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     Edit
                   </button>
-
-                  {sale.status !== "Paid" && (
-                    <button
-                      className="text-sm text-green-600 underline"
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        await supabase
-                          .from("sales")
-                          .update({
-                            status: "Paid",
-                            outstanding: 0
-                          })
-                          .eq("id", sale.id)
-                        location.reload()
-                      }}
-                    >
-                      Mark as Paid
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}
 
             {sales.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-16 text-center text-slate-600">
-                  No sales yet. <a href="/sales/new" className="underline">Add your first sale</a>
+                <td colSpan={7} className="py-16 text-center text-gray-600 dark:text-gray-400">
+                  No sales yet.
                 </td>
               </tr>
             )}
@@ -113,51 +137,35 @@ export default function Sales() {
       </div>
 
       {/* Mobile List */}
-      <div className="md:hidden space-y-4">
-        {sales.length === 0 && (
-          <div className="py-16 text-center text-slate-600">
-            No sales yet. <a href="/sales/new" className="underline">Add your first sale</a>
-          </div>
-        )}
-
+      <div className="md:hidden space-y-4 px-4">
         {sales.map((sale) => (
           <div
             key={sale.id}
+            className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-2 hover:shadow-md transition"
             onClick={() => window.location.href = `/sales/${sale.id}/info`}
-            className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 cursor-pointer hover:bg-slate-50 transition"
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-slate-900">{sale.customer}</p>
-                <p className="text-sm text-slate-600">{sale.product}</p>
+                <p className="font-medium text-gray-800 dark:text-gray-100">{sale.customer}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{sale.product}</p>
               </div>
               <StatusBadge status={sale.status} />
             </div>
 
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-600">{sale.date}</span>
-              <span className="font-medium text-slate-900">₦{Number(sale.sales_price).toLocaleString()}</span>
+            <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+              <span>{sale.date}</span>
+              <span className="font-medium">
+                ₦{Number(sale.sales_price).toLocaleString()}
+              </span>
             </div>
-
-            {sale.status !== "Paid" && (
-              <div className="flex justify-end gap-2">
-                <button
-                  className="text-sm text-green-600 underline"
-                  onClick={async (e) => {
-                    e.stopPropagation()
-                    await supabase
-                      .from("sales")
-                      .update({ status: "Paid", outstanding: 0 })
-                      .eq("id", sale.id)
-                    location.reload()
-                  }}
-                >
-                  Mark as Paid
-                </button>
-              </div>
-            )}
           </div>
         ))}
+
+        {sales.length === 0 && (
+          <div className="text-center text-gray-600 dark:text-gray-400 py-16">
+            No sales yet.
+          </div>
+        )}
       </div>
     </div>
   )

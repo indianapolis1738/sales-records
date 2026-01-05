@@ -17,15 +17,13 @@ export default function SaleInfo() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch sale
-      const { data: saleData, error: saleError } = await supabase
+      const { data: saleData } = await supabase
         .from("sales")
         .select("*")
         .eq("id", id)
         .single()
-      if (!saleError) setSale(saleData)
+      setSale(saleData)
 
-      // Fetch current user profile
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profileData } = await supabase
@@ -33,7 +31,7 @@ export default function SaleInfo() {
           .select("*")
           .eq("id", user.id)
           .single()
-        if (profileData) setProfile(profileData)
+        setProfile(profileData)
       }
     }
 
@@ -69,9 +67,11 @@ export default function SaleInfo() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-md space-y-6">
         {/* Header */}
-        <h2 className="text-2xl font-semibold text-gray-100">Sale Information</h2>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          Sale Information
+        </h2>
 
         {/* Sale Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -104,7 +104,7 @@ export default function SaleInfo() {
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <button
             onClick={() => router.push(`/sales/${sale.id}`)}
-            className="border border-slate-300 px-4 py-2 rounded-lg text-sm text-slate-900 hover:bg-slate-50 transition"
+            className="border border-slate-300 dark:border-slate-700 px-4 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
           >
             Edit
           </button>
@@ -127,7 +127,7 @@ export default function SaleInfo() {
 
           <button
             onClick={() => router.back()}
-            className="text-sm underline text-slate-600 hover:text-slate-900 ml-auto"
+            className="text-sm underline text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 ml-auto"
           >
             Back
           </button>
@@ -136,130 +136,10 @@ export default function SaleInfo() {
         {/* Hidden Receipt for PDF Generation */}
         <div
           ref={receiptRef}
-          style={{
-            position: "absolute",
-            left: "-9999px",
-            top: 0,
-            width: 650,
-            padding: 30,
-            backgroundColor: "#fff",
-            fontFamily: "Helvetica, Arial, sans-serif",
-            color: "#111",
-            lineHeight: 1.5,
-            fontSize: 12,
-          }}
+          className="hidden"
         >
-          {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <img
-              src="/logo.png"
-              alt="Company Logo"
-              style={{ height: 60, marginBottom: 10 }}
-            />
-            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-              {profile.business_name}
-            </h1>
-            <p style={{ fontSize: 12, color: "#555", margin: 0 }}>
-              {profile.business_address}
-            </p>
-            <p style={{ fontSize: 12, color: "#555", margin: 0 }}>
-              {profile.phone_number}
-            </p>
-            <hr style={{ margin: "15px 0", borderColor: "#ddd" }} />
-          </div>
-
-          {/* Sale Details */}
-          <div style={{ marginBottom: 15 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>
-              Receipt
-            </h2>
-
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                marginBottom: 10,
-              }}
-            >
-              <tbody>
-                {[
-                  ["Customer", sale.customer],
-                  ["Date", sale.date],
-                  ["Status", sale.status],
-                ].map(([label, value]) => (
-                  <tr key={label}>
-                    <td
-                      style={{
-                        padding: "6px 0",
-                        fontWeight: 600,
-                        color: "#555",
-                        width: "50%",
-                      }}
-                    >
-                      {label}
-                    </td>
-                    <td style={{ padding: "6px 0", textAlign: "right" }}>{value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Product Details */}
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              marginBottom: 10,
-              fontSize: 12,
-            }}
-          >
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd" }}>
-                <th style={{ textAlign: "left", padding: "8px 0" }}>Product</th>
-                <th style={{ textAlign: "center", padding: "8px 0" }}>S/N</th>
-                <th style={{ textAlign: "center", padding: "8px 0" }}>IMEI</th>
-                <th style={{ textAlign: "right", padding: "8px 0" }}>Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "6px 0" }}>{sale.product}</td>
-                <td style={{ textAlign: "center" }}>{sale.serial_number}</td>
-                <td style={{ textAlign: "center" }}>{sale.imei}</td>
-                <td style={{ textAlign: "right" }}>
-                  ₦{Number(sale.sales_price).toLocaleString()}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Totals */}
-          <table style={{ width: "100%", marginTop: 10, fontSize: 12 }}>
-            <tbody>
-              <tr>
-                <td style={{ fontWeight: 600 }}>Outstanding</td>
-                <td style={{ textAlign: "right" }}>
-                  ₦{Number(sale.outstanding).toLocaleString()}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 600 }}>Total Paid</td>
-                <td style={{ textAlign: "right" }}>
-                  ₦{Number(sale.sales_price - sale.outstanding).toLocaleString()}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <hr style={{ margin: "15px 0", borderColor: "#ddd" }} />
-
-          {/* Footer */}
-          <p style={{ fontSize: 12, color: "#555", textAlign: "center", marginTop: 10 }}>
-            Thank you for your business!
-          </p>
+          {/* Receipt content */}
         </div>
-
       </div>
     </ProtectedRoute>
   )
@@ -267,9 +147,9 @@ export default function SaleInfo() {
 
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (
-    <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-900">{value}</span>
+    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+      <span className="text-slate-600 dark:text-slate-400">{label}</span>
+      <span className="font-medium text-slate-900 dark:text-slate-100">{value}</span>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { User, Settings, Box } from "lucide-react"
+import { User, Settings, Box, UserCircle2Icon } from "lucide-react"
 
 export default function MorePage() {
   const router = useRouter()
@@ -10,6 +10,7 @@ export default function MorePage() {
   const options = [
     { name: "Profile", icon: <User size={20} />, path: "/profile" },
     { name: "Inventory", icon: <Box size={20} />, path: "/inventory" },
+    { name: "Customers", icon: <UserCircle2Icon size={20} />, path: "/customers" },
     // You can add more sections here later
   ]
 

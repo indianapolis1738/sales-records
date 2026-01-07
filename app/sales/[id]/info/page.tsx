@@ -155,11 +155,11 @@ export default function SaleInfo() {
         >
           {/* Header */}
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <img
+            {/* <img
               src="/logo.png"
               alt="Company Logo"
               style={{ height: 60, marginBottom: 10 }}
-            />
+            /> */}
             <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
               {profile.business_name}
             </h1>

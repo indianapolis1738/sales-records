@@ -81,7 +81,7 @@ export default function RootLayout({
           )}
 
           {/* iOS Install Prompt */}
-          <IOSInstallPrompt />\
+          <IOSInstallPrompt />
       </body>
     </html>
   )

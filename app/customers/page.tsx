@@ -40,14 +40,17 @@ export default function CustomersPage() {
         <div className="space-y-4">
             {/* Header */}
             <div className="flex justify-between items-center">
+                <div className="flex gap-4 items-center justify-center">
                 <button
                     onClick={() => router.back()}
-                    className="text-sm text-slate-500 mt-1"
+                    className="text-2xl text-slate-500 mt-1"
                 >
                     ←
                 </button>
 
                 <h1 className="text-lg font-semibold">Customers</h1>
+
+                </div>
                 <button
                     onClick={() => setShowModal(true)}
                     className="px-4 py-2 rounded-md bg-black text-white text-sm"

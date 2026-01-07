@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { Plus, X, Search, Edit2, Trash2, ArrowUp, ArrowDown } from "lucide-react"
+import Skeleton from "@/components/Skeleton"
 
 type InventoryItem = {
   id: string
@@ -150,9 +151,20 @@ export default function InventoryPage() {
 
   if (loading) return (
     <ProtectedRoute>
-      <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">
-        Loading inventory...
-      </div>
+      <Skeleton className="h-6 w-1/3 mb-6" />
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                ))}
+              </div>
+              <div className="mt-10">
+                <Skeleton className="h-6 w-1/4 mb-4" />
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                  ))}
+                </div>
+              </div>
     </ProtectedRoute>
   )
 

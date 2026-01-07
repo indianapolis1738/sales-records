@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import StatusBadge from "@/components/StatusBadge"
 import { Plus, Edit, Save } from "lucide-react"
+import Skeleton from "@/components/Skeleton"
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -105,34 +106,48 @@ export default function Dashboard() {
   const handleSaveGoal = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
+  
     setSavingGoal(true)
     const salesGoal = Number(goalInput)
-
-    await supabase.from("goals").upsert([
-      { user_id: user.id, year: currentYear, sales_goal: salesGoal }
-    ])
-
+  
+    await supabase
+      .from("goals")
+      .upsert(
+        [{ user_id: user.id, year: currentYear, sales_goal: salesGoal }],
+        { onConflict: ["user_id", "year"] }
+      )
+  
     setGoal(salesGoal)
-
+  
     const totalYearlySales = recentSales
       .filter((s) => new Date(s.date).getFullYear() === currentYear)
       .reduce((sum, s) => sum + Number(s.sales_price), 0)
-
+  
     const progress = Math.min((totalYearlySales / salesGoal) * 100, 100)
     setGoalProgress(progress)
-    if (progress >= 100) setGoalReached(true)
-    else setGoalReached(false)
-
+    setGoalReached(progress >= 100)
+  
     setEditingGoal(false)
     setSavingGoal(false)
   }
+  
 
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">
-          Loading dashboard...
+        <Skeleton className="h-6 w-1/3 mb-6" />
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          ))}
+        </div>
+        <div className="mt-10">
+          <Skeleton className="h-6 w-1/4 mb-4" />
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-lg" />
+            ))}
+          </div>
         </div>
       </ProtectedRoute>
     )

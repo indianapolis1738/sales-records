@@ -104,49 +104,49 @@ export default function Dashboard() {
   }, [])
 
   const handleSaveGoal = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
-  
-    setSavingGoal(true)
-  
-    const salesGoal = Number(goalInput)
-    if (isNaN(salesGoal) || salesGoal <= 0) {
-      alert("Please enter a valid goal")
-      setSavingGoal(false)
-      return
-    }
-  
-    // Upsert using the UNIQUE constraint name for (user_id, year)
-    const { error } = await supabase
-      .from("goals")
-      .upsert(
-        [{ user_id: user.id, year: currentYear, sales_goal: salesGoal }],
-        { onConflict: "goals_user_id_year_key" } // Use your DB constraint name
-      )
-  
-    if (error) {
-      console.error("Failed to save goal:", error)
-      alert("Failed to save goal, try again")
-      setSavingGoal(false)
-      return
-    }
-  
-    setGoal(salesGoal)
-  
-    // Calculate progress for the current year
-    const totalYearlySales = recentSales
-      .filter((s) => new Date(s.date).getFullYear() === currentYear)
-      .reduce((sum, s) => sum + Number(s.sales_price), 0)
-  
-    const progress = Math.min((totalYearlySales / salesGoal) * 100, 100)
-    setGoalProgress(progress)
-    setGoalReached(progress >= 100)
-    setEditingGoal(false)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return
+
+  setSavingGoal(true)
+
+  const salesGoal = Number(goalInput)
+  if (isNaN(salesGoal) || salesGoal <= 0) {
+    alert("Please enter a valid goal")
     setSavingGoal(false)
+    return
   }
-  
+
+  // Upsert using the UNIQUE constraint name for (user_id, year)
+  const { error } = await supabase
+    .from("goals")
+    .upsert(
+      [{ user_id: user.id, year: currentYear, sales_goal: salesGoal }],
+      { onConflict: "user_id,year" } 
+    )
+
+  if (error) {
+    console.error("Failed to save goal:", error)
+    alert("Failed to save goal, try again")
+    setSavingGoal(false)
+    return
+  }
+
+  setGoal(salesGoal)
+
+  // Calculate progress for the current year
+  const totalYearlySales = recentSales
+    .filter((s) => new Date(s.date).getFullYear() === currentYear)
+    .reduce((sum, s) => sum + Number(s.sales_price), 0)
+
+  const progress = Math.min((totalYearlySales / salesGoal) * 100, 100)
+  setGoalProgress(progress)
+  setGoalReached(progress >= 100)
+  setEditingGoal(false)
+  setSavingGoal(false)
+}
+
   
 
   if (loading) {

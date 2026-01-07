@@ -16,15 +16,30 @@ export default function AddCustomerModal({ onClose, onSuccess }: any) {
 
     setLoading(true)
 
-    await supabase.from("customers").insert({
+    // Get the currently logged-in user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      setLoading(false)
+      return alert("You must be logged in to add a customer")
+    }
+
+    // Insert customer with user_id for RLS
+    const { error } = await supabase.from("customers").insert({
       full_name: fullName,
       phone_number: phone,
       email,
       notes,
-      status
+      status,
+      user_id: user.id, // ✅ include this for RLS
     })
 
     setLoading(false)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
     onSuccess()
     onClose()
   }

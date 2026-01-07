@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { useState, useEffect, ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import ProtectedRoute from "@/components/ProtectedRoute"
 
 export default function ProfilePage() {
@@ -10,33 +10,50 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [profile, setProfile] = useState<{
     full_name?: string
     phone_number?: string
     business_name?: string
     business_address?: string
+    logo_path?: string
+    logo_url?: string
   }>({})
   const [message, setMessage] = useState<string | null>(null)
 
-  // Fetch profile on mount
+  // ------------------ Fetch profile ------------------
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single()
+
       if (error) setMessage("Failed to load profile")
-      if (profileData) setProfile(profileData)
+      if (profileData) {
+        setProfile(profileData)
+
+        // Generate signed URL for logo if exists
+        if (profileData.logo_path) {
+          const { data: signedData, error: urlError } = await supabase.storage
+            .from("logos")
+            .createSignedUrl(profileData.logo_path, 60) // valid for 60s
+          if (!urlError && signedData) {
+            setProfile(prev => ({ ...prev, logo_url: signedData.signedUrl }))
+          }
+        }
+      }
       setLoading(false)
     }
     fetchProfile()
   }, [])
 
-  // Save profile
+  // ------------------ Save profile ------------------
   const handleSave = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -51,18 +68,47 @@ export default function ProfilePage() {
     }
   }
 
-  // Logout
+  // ------------------ Logout ------------------
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push("/auth/login")
+    router.push("/login")
   }
 
-  // Password reset
+  // ------------------ Password reset ------------------
   const handleChangePassword = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !user.email) return
     await supabase.auth.resetPasswordForEmail(user.email)
     alert("Password reset email sent! Check your inbox.")
+  }
+
+  // ------------------ Logo Upload ------------------
+  const handleUploadLogo = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    setUploading(true)
+
+    const filePath = `${Date.now()}_${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from("logos")
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      alert("Failed to upload logo")
+      setUploading(false)
+      return
+    }
+
+    // Generate signed URL immediately for preview
+    const { data: signedData, error: urlError } = await supabase.storage
+      .from("logos")
+      .createSignedUrl(filePath, 60) // valid 60s
+
+    if (!urlError && signedData) {
+      setProfile(prev => ({ ...prev, logo_path: filePath, logo_url: signedData.signedUrl }))
+    }
+
+    setUploading(false)
   }
 
   const isComplete = profile.full_name && profile.phone_number && profile.business_name
@@ -124,6 +170,21 @@ export default function ProfilePage() {
                 : "Fill in your details to start using your dashboard."}
             </p>
 
+            {/* Logo Upload */}
+            <div className="flex flex-col items-center gap-2">
+              {profile.logo_url && (
+                <img
+                  src={profile.logo_url}
+                  alt="Business Logo"
+                  className="w-24 h-24 object-contain rounded-lg border border-gray-300 dark:border-neutral-700"
+                />
+              )}
+              <label className="cursor-pointer px-4 py-2 bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-neutral-700 text-sm transition">
+                {uploading ? "Uploading..." : "Upload Logo"}
+                <input type="file" className="hidden" accept="image/*" onChange={handleUploadLogo} />
+              </label>
+            </div>
+
             {/* Profile Fields / Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {(!isComplete || editing) ? (
@@ -181,7 +242,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </ProtectedRoute>
-
   )
 }
 

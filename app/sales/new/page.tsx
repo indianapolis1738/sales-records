@@ -132,17 +132,47 @@ export default function AddSale() {
     router.push("/")
   }
 
+  const pickFromContacts = async () => {
+    if (!("contacts" in navigator) || !("ContactsManager" in window)) {
+      alert("Contacts access is not supported on this device")
+      return
+    }
+
+    try {
+      // @ts-ignore
+      const contacts = await navigator.contacts.select(
+        ["name", "tel"],
+        { multiple: false }
+      )
+
+      if (!contacts.length) return
+
+      const contact = contacts[0]
+
+      setNewCustomer({
+        ...newCustomer,
+        full_name: contact.name?.[0] || "",
+        phone_number: contact.tel?.[0] || "",
+      })
+    } catch (err) {
+      console.error("Contact pick cancelled or failed", err)
+    }
+  }
+
+
   return (
     <ProtectedRoute>
       <div className="max-w-3xl mx-auto bg-white dark:bg-neutral-900 p-6 rounded-2xl space-y-6">
 
         <h1 className="text-xl font-semibold">Add Sale</h1>
 
+        <label className="text-sm text-gray-600">Sale Date</label>
         <Input
           type="date"
           value={form.date}
           onChange={e => setForm({ ...form, date: e.target.value })}
         />
+
 
         {/* Customer */}
         <div className="relative">
@@ -226,6 +256,76 @@ export default function AddSale() {
           {loading ? "Saving..." : "Add Sale"}
         </button>
       </div>
+      {customerModalOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white dark:bg-neutral-900 w-full rounded-t-2xl p-4 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="font-semibold">Add Customer</h2>
+              <button onClick={() => setCustomerModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <button
+              onClick={pickFromContacts}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border text-sm"
+            >
+              📇 Import from Contacts
+            </button>
+
+
+            <Input
+              placeholder="Full name"
+              value={newCustomer.full_name}
+              onChange={e =>
+                setNewCustomer({ ...newCustomer, full_name: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Phone number"
+              value={newCustomer.phone_number}
+              onChange={e =>
+                setNewCustomer({ ...newCustomer, phone_number: e.target.value })
+              }
+            />
+
+            <select
+              value={newCustomer.status}
+              onChange={e =>
+                setNewCustomer({ ...newCustomer, status: e.target.value })
+              }
+              className="w-full rounded-lg border px-3 py-2"
+            >
+              <option>Prospect</option>
+              <option>Lead</option>
+              <option>Customer</option>
+            </select>
+
+            <button
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+
+                await supabase.from("customers").insert({
+                  user_id: user.id,
+                  full_name: newCustomer.full_name,
+                  phone_number: newCustomer.phone_number,
+                  status: newCustomer.status,
+                })
+
+                setNewCustomer({ full_name: "", phone_number: "", status: "Prospect" })
+                setCustomerModalOpen(false)
+                fetchCustomers()
+              }}
+              className="w-full bg-black text-white py-2 rounded"
+            >
+              Save Customer
+            </button>
+          </div>
+        </div>
+      )}
+
     </ProtectedRoute>
   )
 }

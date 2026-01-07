@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { User, Settings, Box, UserCircle2Icon } from "lucide-react"
+import { User, Box, UserCircle2Icon } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function MorePage() {
   const router = useRouter()
@@ -13,6 +14,12 @@ export default function MorePage() {
     { name: "Customers", icon: <UserCircle2Icon size={20} />, path: "/customers" },
     // You can add more sections here later
   ]
+
+  // Logout
+    const handleLogout = async () => {
+      await supabase.auth.signOut()
+      router.push("/login")
+    }
 
   return (
     <ProtectedRoute>
@@ -38,7 +45,12 @@ export default function MorePage() {
               </button>
             ))}
           </div>
-
+          <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition"
+                >
+                  Logout
+                </button>
         </div>
       </div>
     </ProtectedRoute>

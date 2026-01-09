@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Trash } from "lucide-react"
 
 export default function AddSale() {
   const router = useRouter()
@@ -13,17 +13,7 @@ export default function AddSale() {
   const [inventory, setInventory] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
 
-  const [productModalOpen, setProductModalOpen] = useState(false)
   const [customerModalOpen, setCustomerModalOpen] = useState(false)
-
-  const [newProduct, setNewProduct] = useState({
-    product_name: "",
-    sku: "",
-    imei: "",
-    quantity: "",
-    cost_price: "",
-    sales_price: ""
-  })
 
   const [newCustomer, setNewCustomer] = useState({
     full_name: "",
@@ -31,22 +21,22 @@ export default function AddSale() {
     status: "Prospect"
   })
 
-  const [savingProduct, setSavingProduct] = useState(false)
-
-  const [form, setForm] = useState({
-    date: "",
-    customer_id: "",
-    customer_name: "",
-    product_id: "",
-    product_name: "",
-    quantity: "1",
-    cost_price: "",
-    sales_price: "",
-    status: "Unpaid",
-    outstanding: "",
-    serial_number: "",
-    imei: ""
-  })
+  // 🔹 MULTI SALE ROWS
+  const [salesRows, setSalesRows] = useState([
+    {
+      customer_id: "",
+      customer_name: "",
+      product_id: "",
+      product_name: "",
+      quantity: "1",
+      cost_price: "",
+      sales_price: "",
+      status: "Unpaid",
+      outstanding: "",
+      serial_number: "",
+      imei: ""
+    }
+  ])
 
   useEffect(() => {
     fetchInventory()
@@ -73,60 +63,103 @@ export default function AddSale() {
     setCustomers(data || [])
   }
 
-  const handleProductSelect = (id: string) => {
+  const handleProductSelect = (rowIndex: number, id: string) => {
     const item = inventory.find(i => i.id === id)
     if (!item) return
-    setForm({
-      ...form,
+    const newRows = [...salesRows]
+    newRows[rowIndex] = {
+      ...newRows[rowIndex],
       product_id: item.id,
       product_name: item.product_name,
       cost_price: item.cost_price.toString(),
       sales_price: item.sales_price.toString(),
       imei: item.imei || ""
-    })
+    }
+    setSalesRows(newRows)
+  }
+
+  const handleChange = (rowIndex: number, field: string, value: string) => {
+    const newRows = [...salesRows]
+    newRows[rowIndex][field as keyof typeof newRows[number]] = value
+    setSalesRows(newRows)
+  }
+
+  const addRow = () => {
+    setSalesRows([
+      ...salesRows,
+      {
+        customer_id: "",
+        customer_name: "",
+        product_id: "",
+        product_name: "",
+        quantity: "1",
+        cost_price: "",
+        sales_price: "",
+        status: "Unpaid",
+        outstanding: "",
+        serial_number: "",
+        imei: ""
+      }
+    ])
+  }
+
+  const removeRow = (index: number) => {
+    const newRows = [...salesRows]
+    newRows.splice(index, 1)
+    setSalesRows(newRows)
   }
 
   const handleSubmit = async () => {
-    if (!form.customer_id || !form.product_id) {
-      alert("Select customer and product")
-      return
-    }
-
-    const soldQty = Number(form.quantity)
-    const item = inventory.find(i => i.id === form.product_id)
-
-    if (soldQty > item.quantity) {
-      alert("Insufficient stock")
-      return
-    }
-
     setLoading(true)
+
+    for (const row of salesRows) {
+      if (!row.customer_id || !row.product_id) {
+        alert("Select customer and product for each sale")
+        setLoading(false)
+        return
+      }
+
+      const item = inventory.find(i => i.id === row.product_id)
+      if (Number(row.quantity) > item.quantity) {
+        alert(`Insufficient stock for ${row.product_name}`)
+        setLoading(false)
+        return
+      }
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from("sales").insert({
-      user_id: user.id,
-      date: form.date,
-      customer_id: form.customer_id,
-      customer: form.customer_name,
-      product: form.product_name,
-      cost_price: Number(form.cost_price),
-      sales_price: Number(form.sales_price),
-      status: form.status,
-      outstanding: Number(form.outstanding),
-      serial_number: form.serial_number,
-      imei: form.imei
-    })
+    for (const row of salesRows) {
+      const soldQty = Number(row.quantity)
+      const item = inventory.find(i => i.id === row.product_id)
 
-    await supabase
-      .from("customers")
-      .update({ status: "Customer" })
-      .eq("id", form.customer_id)
+      await supabase.from("sales").insert({
+        user_id: user.id,
+        date: new Date().toISOString().split("T")[0],
+        customer_id: row.customer_id,
+        customer: row.customer_name,
+        product: row.product_name,
+        cost_price: Number(row.cost_price),
+        sales_price: Number(row.sales_price),
+        status: row.status,
+        outstanding: Number(row.outstanding || 0),
+        serial_number: row.serial_number,
+        imei: row.imei
+      })
 
-    await supabase
-      .from("inventory")
-      .update({ quantity: item.quantity - soldQty })
-      .eq("id", item.id)
+      // update inventory
+      await supabase
+        .from("inventory")
+        .update({ quantity: item.quantity - soldQty })
+        .eq("id", item.id)
+
+      // update customer status
+      await supabase
+        .from("customers")
+        .update({ status: "Customer" })
+        .eq("id", row.customer_id)
+    }
 
     setLoading(false)
     router.push("/")
@@ -159,173 +192,116 @@ export default function AddSale() {
     }
   }
 
-
   return (
     <ProtectedRoute>
       <div className="max-w-3xl mx-auto bg-white dark:bg-neutral-900 p-6 rounded-2xl space-y-6">
 
-        <h1 className="text-xl font-semibold">Add Sale</h1>
+        <h1 className="text-xl font-semibold">Add Sale(s)</h1>
 
-        <label className="text-sm text-gray-600">Sale Date</label>
-        <Input
-          type="date"
-          value={form.date}
-          onChange={e => setForm({ ...form, date: e.target.value })}
-        />
+        {salesRows.map((row, index) => (
+          <div key={index} className="border rounded-xl p-4 space-y-3 bg-gray-50 dark:bg-neutral-800">
+            {/* Customer */}
+            <div className="relative">
+              <select
+                value={row.customer_id}
+                onChange={e => {
+                  const c = customers.find(c => c.id === e.target.value)
+                  if (!c) return
+                  handleChange(index, "customer_id", c.id)
+                  handleChange(index, "customer_name", c.full_name)
+                }}
+                className="w-full rounded-lg border px-3 py-2"
+              >
+                <option value="">Select Customer</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name} ({c.status})
+                  </option>
+                ))}
+              </select>
 
-
-        {/* Customer */}
-        <div className="relative">
-          <select
-            value={form.customer_id}
-            onChange={e => {
-              const c = customers.find(c => c.id === e.target.value)
-              if (!c) return
-              setForm({ ...form, customer_id: c.id, customer_name: c.full_name })
-            }}
-            className="w-full rounded-lg border px-3 py-2"
-          >
-            <option value="">Select Customer</option>
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.full_name} ({c.status})
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => setCustomerModalOpen(true)}
-            className="absolute top-1 right-1 bg-black text-white text-xs px-2 py-1 rounded"
-          >
-            <Plus size={12} /> Add
-          </button>
-        </div>
-
-        {/* Product */}
-        <select
-          value={form.product_id}
-          onChange={e => handleProductSelect(e.target.value)}
-          className="w-full rounded-lg border px-3 py-2"
-        >
-          <option value="">Select Product</option>
-          {inventory.map(i => (
-            <option key={i.id} value={i.id}>
-              {i.product_name} ({i.quantity})
-            </option>
-          ))}
-        </select>
-
-        <Input
-          type="number"
-          placeholder="Quantity"
-          value={form.quantity}
-          onChange={e => setForm({ ...form, quantity: e.target.value })}
-        />
-
-        <Input
-          type="number"
-          placeholder="Sales price"
-          value={form.sales_price}
-          onChange={e => setForm({ ...form, sales_price: e.target.value })}
-        />
-
-        {/* PAYMENT STATUS */}
-        <select
-          value={form.status}
-          onChange={e => setForm({ ...form, status: e.target.value })}
-          className="w-full rounded-lg border px-3 py-2"
-        >
-          <option value="Paid">Paid</option>
-          <option value="Part Payment">Part Payment</option>
-          <option value="Unpaid">Unpaid</option>
-        </select>
-
-        {/* OUTSTANDING */}
-        <Input
-          type="number"
-          placeholder="Outstanding balance"
-          value={form.outstanding}
-          onChange={e => setForm({ ...form, outstanding: e.target.value })}
-        />
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-black text-white py-2 rounded"
-        >
-          {loading ? "Saving..." : "Add Sale"}
-        </button>
-      </div>
-      {customerModalOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-          <div className="bg-white dark:bg-neutral-900 w-full rounded-t-2xl p-4 space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="font-semibold">Add Customer</h2>
-              <button onClick={() => setCustomerModalOpen(false)}>
-                <X size={18} />
+              <button
+                onClick={() => setCustomerModalOpen(true)}
+                className="absolute top-1 right-1 bg-black text-white text-xs px-2 py-1 rounded"
+              >
+                <Plus size={12} /> Add
               </button>
             </div>
 
-            <button
-              onClick={pickFromContacts}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border text-sm"
-            >
-              📇 Import from Contacts
-            </button>
-
-
-            <Input
-              placeholder="Full name"
-              value={newCustomer.full_name}
-              onChange={e =>
-                setNewCustomer({ ...newCustomer, full_name: e.target.value })
-              }
-            />
-
-            <Input
-              placeholder="Phone number"
-              value={newCustomer.phone_number}
-              onChange={e =>
-                setNewCustomer({ ...newCustomer, phone_number: e.target.value })
-              }
-            />
-
+            {/* Product */}
             <select
-              value={newCustomer.status}
-              onChange={e =>
-                setNewCustomer({ ...newCustomer, status: e.target.value })
-              }
+              value={row.product_id}
+              onChange={e => handleProductSelect(index, e.target.value)}
               className="w-full rounded-lg border px-3 py-2"
             >
-              <option>Prospect</option>
-              <option>Lead</option>
-              <option>Customer</option>
+              <option value="">Select Product</option>
+              {inventory.map(i => (
+                <option key={i.id} value={i.id}>
+                  {i.product_name} ({i.quantity})
+                </option>
+              ))}
             </select>
 
-            <button
-              onClick={async () => {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="Quantity"
+                value={row.quantity}
+                onChange={e => handleChange(index, "quantity", e.target.value)}
+              />
+              <Input
+                type="number"
+                placeholder="Sales Price"
+                value={row.sales_price}
+                onChange={e => handleChange(index, "sales_price", e.target.value)}
+              />
+              <button onClick={() => removeRow(index)} className="text-red-500">
+                <Trash size={20} />
+              </button>
+            </div>
 
-                await supabase.from("customers").insert({
-                  user_id: user.id,
-                  full_name: newCustomer.full_name,
-                  phone_number: newCustomer.phone_number,
-                  status: newCustomer.status,
-                })
-
-                setNewCustomer({ full_name: "", phone_number: "", status: "Prospect" })
-                setCustomerModalOpen(false)
-                fetchCustomers()
-              }}
-              className="w-full bg-black text-white py-2 rounded"
+            <select
+              value={row.status}
+              onChange={e => handleChange(index, "status", e.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
             >
-              Save Customer
-            </button>
-          </div>
-        </div>
-      )}
+              <option value="Paid">Paid</option>
+              <option value="Part Payment">Part Payment</option>
+              <option value="Unpaid">Unpaid</option>
+            </select>
 
+            <Input
+              type="number"
+              placeholder="Outstanding balance"
+              value={row.outstanding}
+              onChange={e => handleChange(index, "outstanding", e.target.value)}
+            />
+          </div>
+        ))}
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button onClick={addRow} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center gap-1 text-gray-900 dark:text-gray-100">
+            <Plus size={16} /> Add Row
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 bg-black text-white rounded-lg"
+          >
+            {loading ? "Saving..." : "Submit Sales"}
+          </button>
+        </div>
+      </div>
+
+      {customerModalOpen && (
+        <CustomerModal
+          newCustomer={newCustomer}
+          setNewCustomer={setNewCustomer}
+          setCustomerModalOpen={setCustomerModalOpen}
+          fetchCustomers={fetchCustomers}
+        />
+      )}
     </ProtectedRoute>
   )
 }
@@ -336,5 +312,91 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       className="w-full rounded-lg border px-3 py-2 text-sm bg-white dark:bg-neutral-900"
     />
+  )
+}
+
+function CustomerModal({ newCustomer, setNewCustomer, setCustomerModalOpen, fetchCustomers }: any) {
+  const handleSave = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    await supabase.from("customers").insert({
+      user_id: user.id,
+      full_name: newCustomer.full_name,
+      phone_number: newCustomer.phone_number,
+      status: newCustomer.status,
+    })
+
+    setNewCustomer({ full_name: "", phone_number: "", status: "Prospect" })
+    setCustomerModalOpen(false)
+    fetchCustomers()
+  }
+
+  const pickFromContacts = async () => {
+    if (!("contacts" in navigator) || !("ContactsManager" in window)) {
+      alert("Contacts access is not supported on this device")
+      return
+    }
+
+    try {
+      // @ts-ignore
+      const contacts = await navigator.contacts.select(["name", "tel"], { multiple: false })
+      if (!contacts.length) return
+      const contact = contacts[0]
+      setNewCustomer({
+        ...newCustomer,
+        full_name: contact.name?.[0] || "",
+        phone_number: contact.tel?.[0] || "",
+      })
+    } catch (err) {
+      console.error("Contact pick cancelled or failed", err)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+      <div className="bg-white dark:bg-neutral-900 w-full rounded-t-2xl p-4 space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="font-semibold">Add Customer</h2>
+          <button onClick={() => setCustomerModalOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <button
+          onClick={pickFromContacts}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border text-sm"
+        >
+          📇 Import from Contacts
+        </button>
+
+        <Input
+          placeholder="Full name"
+          value={newCustomer.full_name}
+          onChange={e => setNewCustomer({ ...newCustomer, full_name: e.target.value })}
+        />
+        <Input
+          placeholder="Phone number"
+          value={newCustomer.phone_number}
+          onChange={e => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
+        />
+        <select
+          value={newCustomer.status}
+          onChange={e => setNewCustomer({ ...newCustomer, status: e.target.value })}
+          className="w-full rounded-lg border px-3 py-2"
+        >
+          <option>Prospect</option>
+          <option>Lead</option>
+          <option>Customer</option>
+        </select>
+
+        <button
+          onClick={handleSave}
+          className="w-full bg-black text-white py-2 rounded"
+        >
+          Save Customer
+        </button>
+      </div>
+    </div>
   )
 }

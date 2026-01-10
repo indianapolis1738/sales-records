@@ -109,61 +109,104 @@ export default function AddSale() {
     setSalesRows(newRows)
   }
 
+  const generateInvoiceNumber = () => {
+    return `INV-${Date.now()}`
+  }
+  
+
   const handleSubmit = async () => {
     setLoading(true)
-
+  
+    // basic validation
     for (const row of salesRows) {
       if (!row.customer_id || !row.product_id) {
-        alert("Select customer and product for each sale")
+        alert("Select customer and product for each row")
         setLoading(false)
         return
       }
-
+  
       const item = inventory.find(i => i.id === row.product_id)
-      if (Number(row.quantity) > item.quantity) {
+      if (!item || Number(row.quantity) > item.quantity) {
         alert(`Insufficient stock for ${row.product_name}`)
         setLoading(false)
         return
       }
     }
-
+  
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    for (const row of salesRows) {
-      const soldQty = Number(row.quantity)
-      const item = inventory.find(i => i.id === row.product_id)
-
-      await supabase.from("sales").insert({
+    if (!user) {
+      setLoading(false)
+      return
+    }
+  
+    const invoiceNumber = generateInvoiceNumber()
+    const customerName = salesRows[0].customer_name
+    const status = salesRows[0].status
+  
+    // 1️⃣ CREATE INVOICE (sales table)
+    const { data: invoice, error: invoiceError } = await supabase
+      .from("sales")
+      .insert({
         user_id: user.id,
         date: new Date().toISOString().split("T")[0],
-        customer_id: row.customer_id,
-        customer: row.customer_name,
-        product: row.product_name,
-        cost_price: Number(row.cost_price),
-        sales_price: Number(row.sales_price),
-        status: row.status,
-        outstanding: Number(row.outstanding || 0),
-        serial_number: row.serial_number,
-        imei: row.imei
+        customer_name: customerName,
+        invoice_number: invoiceNumber,
+        status,
+        outstanding: Number(salesRows[0].outstanding || 0)
       })
-
-      // update inventory
+      .select()
+      .single()
+  
+    if (invoiceError) {
+      alert("Failed to create invoice")
+      setLoading(false)
+      return
+    }
+  
+    // 2️⃣ INSERT INVOICE ITEMS
+    const invoiceItems = salesRows.map(row => ({
+      sale_id: invoice.id,
+      user_id: user.id,
+      product: row.product_name,
+      quantity: Number(row.quantity),
+      cost_price: Number(row.cost_price),
+      sales_price: Number(row.sales_price)
+    }))
+  
+    const { error: itemsError } = await supabase
+      .from("invoice_items")
+      .insert(invoiceItems)
+  
+    if (itemsError) {
+      alert("Failed to add invoice items")
+      setLoading(false)
+      return
+    }
+  
+    // 3️⃣ UPDATE INVENTORY
+    for (const row of salesRows) {
+      const item = inventory.find(i => i.id === row.product_id)
       await supabase
         .from("inventory")
-        .update({ quantity: item.quantity - soldQty })
+        .update({ quantity: item.quantity - Number(row.quantity) })
         .eq("id", item.id)
-
-      // update customer status
-      await supabase
-        .from("customers")
-        .update({ status: "Customer" })
-        .eq("id", row.customer_id)
     }
-
+  
+    // 4️⃣ UPDATE CUSTOMER STATUS
+    await supabase
+      .from("customers")
+      .update({ status: "Customer" })
+      .eq("id", salesRows[0].customer_id)
+  
+    // 5️⃣ UPDATE INVOICE TOTALS
+    await supabase.rpc("update_invoice_totals", {
+      sale_uuid: invoice.id
+    })
+  
     setLoading(false)
     router.push("/")
   }
+  
 
   const pickFromContacts = async () => {
     if (!("contacts" in navigator) || !("ContactsManager" in window)) {

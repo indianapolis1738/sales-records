@@ -53,14 +53,14 @@ export default function Dashboard() {
 
       const { data: sales } = await supabase
         .from("sales")
-        .select("sales_price, cost_price, outstanding, status, date")
+        .select("total_amount, total_profit, outstanding, status, date")
         .eq("user_id", user.id)
 
       if (sales) {
         setStats({
-          totalSales: sales.reduce((s, i) => s + Number(i.sales_price), 0),
+          totalSales: sales.reduce((s, i) => s + Number(i.total_amount), 0),
           totalProfit: sales.reduce(
-            (s, i) => s + (Number(i.sales_price) - Number(i.cost_price)),
+            (s, i) => s + (Number(i.total_profit)),
             0
           ),
           outstanding: sales.reduce((s, i) => s + Number(i.outstanding), 0),
@@ -82,7 +82,7 @@ export default function Dashboard() {
 
         const totalYearlySales = sales
           ?.filter((s) => new Date(s.date).getFullYear() === currentYear)
-          .reduce((sum, s) => sum + Number(s.sales_price), 0) || 0
+          .reduce((sum, s) => sum + Number(s.total_amount), 0) || 0
 
         const progress = Math.min((totalYearlySales / goalData.sales_goal) * 100, 100)
         setGoalProgress(progress)
@@ -91,7 +91,7 @@ export default function Dashboard() {
 
       const { data: recent } = await supabase
         .from("sales")
-        .select("id, date, customer, product, sales_price, status")
+        .select("id, date, customer_name, total_amount, status")
         .eq("user_id", user.id)
         .order("date", { ascending: false })
         .limit(5)
@@ -314,7 +314,7 @@ function RecentSalesTable({ sales }: { sales: any[] }) {
             <tr>
               <th className="py-3 px-4 font-medium text-left">Date</th>
               <th className="py-3 px-4 font-medium text-left">Customer</th>
-              <th className="py-3 px-4 font-medium text-left">Product</th>
+              {/* <th className="py-3 px-4 font-medium text-left">Product</th> */}
               <th className="py-3 px-4 font-medium text-left">Amount</th>
               <th className="py-3 px-4 font-medium text-left">Status</th>
             </tr>
@@ -328,7 +328,7 @@ function RecentSalesTable({ sales }: { sales: any[] }) {
               >
                 <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{sale.date}</td>
                 <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">{sale.customer}</td>
-                <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{sale.product}</td>
+                {/* <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{sale.product}</td> */}
                 <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
                   ₦{Number(sale.sales_price).toLocaleString()}
                 </td>

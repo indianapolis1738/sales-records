@@ -74,13 +74,13 @@ export default function Sales() {
             })
 
       const salesTotal = filteredSales.reduce(
-        (sum, s) => sum + Number(s.sales_price || 0),
+        (sum, s) => sum + Number(s.total_amount || 0),
         0
       )
 
       const gainBeforeExpenses = filteredSales.reduce(
         (sum, s) =>
-          sum + (Number(s.sales_price || 0) - Number(s.cost_price || 0)),
+          sum + (Number(s.total_profit || 0) ),
         0
       )
 
@@ -107,7 +107,7 @@ export default function Sales() {
       })
 
       const lastMonthTotal = lastMonthSales.reduce(
-        (sum, s) => sum + Number(s.sales_price || 0),
+        (sum, s) => sum + Number(s.total_amount || 0),
         0
       )
 
@@ -139,8 +139,8 @@ export default function Sales() {
       Customer: sale.customer,
       Product: sale.product,
       "Cost Price": Number(sale.cost_price),
-      "Sales Price": Number(sale.sales_price),
-      Profit: Number(sale.sales_price) - Number(sale.cost_price),
+      "Sales Price": Number(sale.total_amount),
+      Profit: Number(sale.total_amount) - Number(sale.cost_price),
       Status: sale.status,
       Outstanding: Number(sale.outstanding),
       "Created At": new Date(sale.created_at).toLocaleString()
@@ -298,10 +298,10 @@ export default function Sales() {
                 onClick={() => window.location.href = `/sales/${sale.id}/info`}
               >
                 <td className="py-3 px-4">{sale.date}</td>
-                <td className="py-3 px-4 font-medium">{sale.customer}</td>
+                <td className="py-3 px-4 font-medium">{sale.customer_name}</td>
                 <td className="py-3 px-4">{sale.product}</td>
                 <td className="py-3 px-4 font-medium">
-                  ₦{Number(sale.sales_price).toLocaleString()}
+                  ₦{Number(sale.total_amount).toLocaleString()}
                 </td>
                 <td className="py-3 px-4">
                   <StatusBadge status={sale.status} />
@@ -344,7 +344,7 @@ export default function Sales() {
           >
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-medium text-gray-800 dark:text-gray-100">{sale.customer}</p>
+                <p className="font-medium text-gray-800 dark:text-gray-100">{sale.customer_name}</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{sale.product}</p>
               </div>
               <StatusBadge status={sale.status} />
@@ -353,7 +353,7 @@ export default function Sales() {
             <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
               <span>{sale.date}</span>
               <span className="font-medium">
-                ₦{Number(sale.sales_price).toLocaleString()}
+                ₦{Number(sale.total_amount).toLocaleString()}
               </span>
             </div>
           </div>

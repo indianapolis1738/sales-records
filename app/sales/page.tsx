@@ -282,7 +282,7 @@ export default function Sales() {
             <tr>
               <th className="py-3 px-4 text-left">Date</th>
               <th className="py-3 px-4 text-left">Customer</th>
-              <th className="py-3 px-4 text-left">Product</th>
+              {/* <th className="py-3 px-4 text-left">Product</th> */}
               <th className="py-3 px-4 text-left">Sales</th>
               <th className="py-3 px-4 text-left">Status</th>
               <th className="py-3 px-4 text-left">Outstanding</th>
@@ -299,7 +299,7 @@ export default function Sales() {
               >
                 <td className="py-3 px-4">{sale.date}</td>
                 <td className="py-3 px-4 font-medium">{sale.customer_name}</td>
-                <td className="py-3 px-4">{sale.product}</td>
+                {/* <td className="py-3 px-4">{sale.product}</td> */}
                 <td className="py-3 px-4 font-medium">
                   ₦{Number(sale.total_amount).toLocaleString()}
                 </td>

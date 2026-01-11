@@ -45,7 +45,7 @@ export default function TaxDashboard() {
 
       const { data: sales } = await supabase
         .from("sales")
-        .select("cost_price, sales_price")
+        .select("total_profit, total_amount")
         .eq("user_id", user.id)
         .gte("date", start)
 
@@ -57,10 +57,11 @@ export default function TaxDashboard() {
 
       setExpenses(expensesData || [])
 
-      const totalSales = sales?.reduce((acc, s) => acc + Number(s.sales_price), 0) || 0
-      const totalCost = sales?.reduce((acc, s) => acc + Number(s.cost_price), 0) || 0
+      const totalSales = sales?.reduce((acc, s) => acc + Number(s.total_amount), 0) || 0
+      const totalCost = sales?.reduce((acc, s) => acc + Number(s.total_amount - s.total_profit), 0) || 0
+      const totalProfit = sales?.reduce((acc, s) => acc + Number(s.total_profit), 0) || 0
       const totalExpenses = expensesData?.reduce((acc, e) => acc + Number(e.amount), 0) || 0
-      const assessableProfit = totalSales - totalCost - totalExpenses
+      const assessableProfit = totalProfit - totalExpenses
 
       // Small Company Check
       const smallCompany = totalSales <= 50_000_000 && totalCost + totalExpenses <= 250_000_000

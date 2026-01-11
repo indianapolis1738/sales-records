@@ -327,10 +327,10 @@ function RecentSalesTable({ sales }: { sales: any[] }) {
                 className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
               >
                 <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{sale.date}</td>
-                <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">{sale.customer}</td>
+                <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">{sale.customer_name}</td>
                 {/* <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{sale.product}</td> */}
                 <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
-                  ₦{Number(sale.sales_price).toLocaleString()}
+                  ₦{Number(sale.total_amount).toLocaleString()}
                 </td>
                 <td className="py-3 px-4">
                   <StatusBadge status={sale.status} />
@@ -351,7 +351,7 @@ function RecentSalesTable({ sales }: { sales: any[] }) {
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{sale.customer}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{sale.customer_name}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{sale.product}</p>
               </div>
               <StatusBadge status={sale.status} />
@@ -359,7 +359,7 @@ function RecentSalesTable({ sales }: { sales: any[] }) {
             <div className="flex justify-between text-sm">
               <span className="text-slate-600 dark:text-slate-400">{sale.date}</span>
               <span className="font-medium text-slate-900 dark:text-slate-100">
-                ₦{Number(sale.sales_price).toLocaleString()}
+                ₦{Number(sale.total_amount).toLocaleString()}
               </span>
             </div>
           </div>

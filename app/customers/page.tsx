@@ -41,14 +41,14 @@ export default function CustomersPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div className="flex gap-4 items-center justify-center">
-                <button
-                    onClick={() => router.back()}
-                    className="text-2xl text-slate-500 mt-1"
-                >
-                    ←
-                </button>
+                    <button
+                        onClick={() => router.back()}
+                        className="text-2xl text-slate-500 mt-1"
+                    >
+                        ←
+                    </button>
 
-                <h1 className="text-lg font-semibold">Customers</h1>
+                    <h1 className="text-lg font-semibold">Customers</h1>
 
                 </div>
                 <button

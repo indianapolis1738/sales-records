@@ -12,11 +12,9 @@ export default function AuthPage() {
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [signupForm, setSignupForm] = useState({
-    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    phone: ""
   })
 
   // ------------------ Handlers ------------------
@@ -31,12 +29,12 @@ export default function AuthPage() {
   }
 
   const handleSignup = async () => {
-    const { name, email, password, confirmPassword, phone } = signupForm
-    if (!name || !email || !password || !confirmPassword)
+    const { email, password, confirmPassword,  } = signupForm
+    if ( !email || !password || !confirmPassword)
       return alert("Please fill all required fields")
     if (password !== confirmPassword) return alert("Passwords do not match")
     setLoading(true)
-    const { error } = await signUp(email, password, { name, phone })
+    const { error } = await signUp(email, password)
     setLoading(false)
     if (!error) router.push("/")
     else alert(error.message || "Signup failed")
@@ -114,13 +112,13 @@ export default function AuthPage() {
               transition={{ duration: 0.25 }}
               className="space-y-3"
             >
-              <InputField
+              {/* <InputField
                 placeholder="Full Name"
                 value={signupForm.name}
                 onChange={(e) =>
                   setSignupForm({ ...signupForm, name: e.target.value })
                 }
-              />
+              /> */}
               <InputField
                 placeholder="Email"
                 type="email"
@@ -129,13 +127,13 @@ export default function AuthPage() {
                   setSignupForm({ ...signupForm, email: e.target.value })
                 }
               />
-              <InputField
+              {/* <InputField
                 placeholder="Phone (Optional)"
                 value={signupForm.phone}
                 onChange={(e) =>
                   setSignupForm({ ...signupForm, phone: e.target.value })
                 }
-              />
+              /> */}
               <InputField
                 placeholder="Password"
                 type="password"

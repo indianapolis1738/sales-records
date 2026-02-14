@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        <title>Flowly</title>
+        <title>Flow By Kript</title>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -57,7 +57,7 @@ export default function RootLayout({
           {showNav && (
             <aside className="hidden md:flex w-64 flex-col border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
               <div className="mb-8 text-lg font-semibold">
-                Flowly
+                Flow by Kript
               </div>
 
               <nav className="space-y-2">

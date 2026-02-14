@@ -112,11 +112,11 @@ export default function AddSale() {
   const generateInvoiceNumber = () => {
     return `INV-${Date.now()}`
   }
-  
+
 
   const handleSubmit = async () => {
     setLoading(true)
-  
+
     // basic validation
     for (const row of salesRows) {
       if (!row.customer_id || !row.product_id) {
@@ -124,7 +124,7 @@ export default function AddSale() {
         setLoading(false)
         return
       }
-  
+
       const item = inventory.find(i => i.id === row.product_id)
       if (!item || Number(row.quantity) > item.quantity) {
         alert(`Insufficient stock for ${row.product_name}`)
@@ -132,17 +132,17 @@ export default function AddSale() {
         return
       }
     }
-  
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setLoading(false)
       return
     }
-  
+
     const invoiceNumber = generateInvoiceNumber()
     const customerName = salesRows[0].customer_name
     const status = salesRows[0].status
-  
+
     // 1️⃣ CREATE INVOICE (sales table)
     const { data: invoice, error: invoiceError } = await supabase
       .from("sales")
@@ -156,13 +156,13 @@ export default function AddSale() {
       })
       .select()
       .single()
-  
+
     if (invoiceError) {
       alert("Failed to create invoice")
       setLoading(false)
       return
     }
-  
+
     // 2️⃣ INSERT INVOICE ITEMS
     const invoiceItems = salesRows.map(row => ({
       sale_id: invoice.id,
@@ -170,19 +170,20 @@ export default function AddSale() {
       product: row.product_name,
       quantity: Number(row.quantity),
       cost_price: Number(row.cost_price),
-      sales_price: Number(row.sales_price)
+      sales_price: Number(row.sales_price),
+      serial_number: row.serial_number,
     }))
-  
+
     const { error: itemsError } = await supabase
       .from("invoice_items")
       .insert(invoiceItems)
-  
+
     if (itemsError) {
       alert("Failed to add invoice items")
       setLoading(false)
       return
     }
-  
+
     // 3️⃣ UPDATE INVENTORY
     for (const row of salesRows) {
       const item = inventory.find(i => i.id === row.product_id)
@@ -191,49 +192,49 @@ export default function AddSale() {
         .update({ quantity: item.quantity - Number(row.quantity) })
         .eq("id", item.id)
     }
-  
+
     // 4️⃣ UPDATE CUSTOMER STATUS
     await supabase
       .from("customers")
       .update({ status: "Customer" })
       .eq("id", salesRows[0].customer_id)
-  
+
     // 5️⃣ UPDATE INVOICE TOTALS
     await supabase.rpc("update_invoice_totals", {
       sale_uuid: invoice.id
     })
-  
+
     setLoading(false)
     router.push("/")
   }
-  
 
-  const pickFromContacts = async () => {
-    if (!("contacts" in navigator) || !("ContactsManager" in window)) {
-      alert("Contacts access is not supported on this device")
-      return
-    }
 
-    try {
-      // @ts-ignore
-      const contacts = await navigator.contacts.select(
-        ["name", "tel"],
-        { multiple: false }
-      )
+  // const pickFromContacts = async () => {
+  //   if (!("contacts" in navigator) || !("ContactsManager" in window)) {
+  //     alert("Contacts access is not supported on this device")
+  //     return
+  //   }
 
-      if (!contacts.length) return
+  //   try {
+  //     // @ts-ignore
+  //     const contacts = await navigator.contacts.select(
+  //       ["name", "tel"],
+  //       { multiple: false }
+  //     )
 
-      const contact = contacts[0]
+  //     if (!contacts.length) return
 
-      setNewCustomer({
-        ...newCustomer,
-        full_name: contact.name?.[0] || "",
-        phone_number: contact.tel?.[0] || "",
-      })
-    } catch (err) {
-      console.error("Contact pick cancelled or failed", err)
-    }
-  }
+  //     const contact = contacts[0]
+
+  //     setNewCustomer({
+  //       ...newCustomer,
+  //       full_name: contact.name?.[0] || "",
+  //       phone_number: contact.tel?.[0] || "",
+  //     })
+  //   } catch (err) {
+  //     console.error("Contact pick cancelled or failed", err)
+  //   }
+  // }
 
   return (
     <ProtectedRoute>
@@ -318,6 +319,11 @@ export default function AddSale() {
               placeholder="Outstanding balance"
               value={row.outstanding}
               onChange={e => handleChange(index, "outstanding", e.target.value)}
+            />
+            <Input
+              placeholder="Notes / Serial Number"
+              value={row.serial_number}
+              onChange={e => handleChange(index, "serial_number", e.target.value)}
             />
           </div>
         ))}

@@ -90,7 +90,7 @@ export default function Sales() {
       )
 
       setMonthlySales(salesTotal)
-      setMonthlyGain(gainBeforeExpenses - expenseTotal)
+      setMonthlyGain(gainBeforeExpenses)
 
       if (selectedMonth === "all" || selectedYear === "all") {
         setMonthComparison(0)

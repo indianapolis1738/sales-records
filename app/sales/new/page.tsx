@@ -85,11 +85,14 @@ export default function AddSale() {
   }
 
   const addRow = () => {
+    // Get customer info from the first row
+    const firstRowCustomer = salesRows[0]
+    
     setSalesRows([
       ...salesRows,
       {
-        customer_id: "",
-        customer_name: "",
+        customer_id: firstRowCustomer.customer_id,
+        customer_name: firstRowCustomer.customer_name,
         product_id: "",
         product_name: "",
         quantity: "1",

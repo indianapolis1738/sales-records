@@ -12,9 +12,12 @@ export default function AuthPage() {
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [signupForm, setSignupForm] = useState({
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    phone: "",
+    businessname: "",
   })
 
   // ------------------ Handlers ------------------
@@ -29,12 +32,12 @@ export default function AuthPage() {
   }
 
   const handleSignup = async () => {
-    const { email, password, confirmPassword,  } = signupForm
-    if ( !email || !password || !confirmPassword)
+    const { name, email, password, confirmPassword, phone } = signupForm
+    if (!name || !email || !password || !confirmPassword)
       return alert("Please fill all required fields")
     if (password !== confirmPassword) return alert("Passwords do not match")
     setLoading(true)
-    const { error } = await signUp(email, password)
+    const { error } = await signUp(email, password, { name, phone })
     setLoading(false)
     if (!error) router.push("/")
     else alert(error.message || "Signup failed")

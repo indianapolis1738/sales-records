@@ -40,7 +40,7 @@ export default function ProfilePage() {
         .eq("id", user.id)
         .single()
 
-      if (error) setMessage("❌ Failed to load profile")
+      if (error) setMessage("Failed to load profile")
       if (profileData) {
         setProfile(profileData)
         if (profileData.logo_path) {
@@ -158,9 +158,9 @@ export default function ProfilePage() {
           <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl shadow-sm md:p-6 p-2 space-y-6">
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-col sm:justify-between sm:items gap-4">
               <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100">
-                {isComplete ? "👤 Your Profile" : "✨ Complete Your Profile"}
+                {isComplete ? "👤 Your Profile" : "Complete Your Profile"}
               </h1>
               <div className="flex gap-3 sm:gap-4 flex-wrap">
                 <button
@@ -183,11 +183,12 @@ export default function ProfilePage() {
             )}
 
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Edit your profile information below. ✅ indicates a completed field.
+              Edit your profile information below. <br />
+              "✅" indicates a completed field.
             </p>
 
             {/* Logo Upload */}
-            <div className="flex flex-col items-center gap-2">
+            {/* <div className="flex flex-col items-center gap-2">
               {profile.logo_url && (
                 <img
                   src={profile.logo_url}
@@ -199,10 +200,10 @@ export default function ProfilePage() {
                 {uploading ? "Uploading..." : "📷 Upload Logo"}
                 <input type="file" className="hidden" accept="image/*" onChange={handleUploadLogo} />
               </label>
-            </div>
+            </div> */}
 
             {/* Profile Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-1 w-3/4 gap-6">
               <ProfileInput
                 placeholder="Full Name"
                 value={profile.full_name || ""}

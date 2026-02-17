@@ -46,6 +46,8 @@ export default function AuthPage() {
   // ------------------ UI ------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+
+      
       <div className="bg-white dark:bg-slate-800 w-full max-w-md p-6 sm:p-8 rounded-2xl shadow-md transition-colors duration-300">
         {/* Tabs */}
         <div className="flex justify-center mb-6 border-b border-slate-200 dark:border-slate-700">

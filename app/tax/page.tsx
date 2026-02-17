@@ -155,7 +155,7 @@ export default function TaxDashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-6xl mx-auto p-6 sm:p-8 space-y-6 bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-gray-200 dark:border-neutral-700">
+      <div className="max-w-6xl mx-auto p-6 sm:p-8 md:mt-10 space-y-6 bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-gray-200 dark:border-neutral-700">
 
         {/* Back & Export */}
         <div className="flex justify-between items-center">

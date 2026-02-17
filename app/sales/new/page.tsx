@@ -24,6 +24,7 @@ export default function AddSale() {
   // 🔹 MULTI SALE ROWS
   const [salesRows, setSalesRows] = useState([
     {
+      date: '',
       customer_id: "",
       customer_name: "",
       product_id: "",
@@ -91,6 +92,7 @@ export default function AddSale() {
     setSalesRows([
       ...salesRows,
       {
+        date: firstRowCustomer.date,
         customer_id: firstRowCustomer.customer_id,
         customer_name: firstRowCustomer.customer_name,
         product_id: "",
@@ -151,7 +153,7 @@ export default function AddSale() {
       .from("sales")
       .insert({
         user_id: user.id,
-        date: new Date().toISOString().split("T")[0],
+        date: salesRows[0].date || new Date().toISOString().split("T")[0],
         customer_name: customerName,
         invoice_number: invoiceNumber,
         status,
@@ -211,138 +213,217 @@ export default function AddSale() {
     router.push("/")
   }
 
-
-  // const pickFromContacts = async () => {
-  //   if (!("contacts" in navigator) || !("ContactsManager" in window)) {
-  //     alert("Contacts access is not supported on this device")
-  //     return
-  //   }
-
-  //   try {
-  //     // @ts-ignore
-  //     const contacts = await navigator.contacts.select(
-  //       ["name", "tel"],
-  //       { multiple: false }
-  //     )
-
-  //     if (!contacts.length) return
-
-  //     const contact = contacts[0]
-
-  //     setNewCustomer({
-  //       ...newCustomer,
-  //       full_name: contact.name?.[0] || "",
-  //       phone_number: contact.tel?.[0] || "",
-  //     })
-  //   } catch (err) {
-  //     console.error("Contact pick cancelled or failed", err)
-  //   }
-  // }
-
   return (
     <ProtectedRoute>
-      <div className="max-w-3xl mx-auto bg-white dark:bg-neutral-900 p-6 rounded-2xl space-y-6">
-
-        <h1 className="text-xl font-semibold">Add Sale(s)</h1>
-
-        {salesRows.map((row, index) => (
-          <div key={index} className="border rounded-xl p-4 space-y-3 bg-gray-50 dark:bg-neutral-800">
-            {/* Customer */}
-            <div className="relative">
-              <select
-                value={row.customer_id}
-                onChange={e => {
-                  const c = customers.find(c => c.id === e.target.value)
-                  if (!c) return
-                  handleChange(index, "customer_id", c.id)
-                  handleChange(index, "customer_name", c.full_name)
-                }}
-                className="w-full rounded-lg border px-3 py-2"
-              >
-                <option value="">Select Customer</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name} ({c.status})
-                  </option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => setCustomerModalOpen(true)}
-                className="absolute top-1 right-1 bg-black text-white text-xs px-2 py-1 rounded"
-              >
-                <Plus size={12} /> Add
-              </button>
-            </div>
-
-            {/* Product */}
-            <select
-              value={row.product_id}
-              onChange={e => handleProductSelect(index, e.target.value)}
-              className="w-full rounded-lg border px-3 py-2"
-            >
-              <option value="">Select Product</option>
-              {inventory.map(i => (
-                <option key={i.id} value={i.id}>
-                  {i.product_name} ({i.quantity})
-                </option>
-              ))}
-            </select>
-
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Quantity"
-                value={row.quantity}
-                onChange={e => handleChange(index, "quantity", e.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="Sales Price"
-                value={row.sales_price}
-                onChange={e => handleChange(index, "sales_price", e.target.value)}
-              />
-              <button onClick={() => removeRow(index)} className="text-red-500">
-                <Trash size={20} />
-              </button>
-            </div>
-
-            <select
-              value={row.status}
-              onChange={e => handleChange(index, "status", e.target.value)}
-              className="w-full rounded-lg border px-3 py-2"
-            >
-              <option value="Paid">Paid</option>
-              <option value="Part Payment">Part Payment</option>
-              <option value="Unpaid">Unpaid</option>
-            </select>
-
-            <Input
-              type="number"
-              placeholder="Outstanding balance"
-              value={row.outstanding}
-              onChange={e => handleChange(index, "outstanding", e.target.value)}
-            />
-            <Input
-              placeholder="Notes / Serial Number"
-              value={row.serial_number}
-              onChange={e => handleChange(index, "serial_number", e.target.value)}
-            />
+      <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 p-4 sm:p-6 ">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Add Sale(s)
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Add one or multiple items to a single invoice
+            </p>
           </div>
-        ))}
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button onClick={addRow} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center gap-1 text-gray-900 dark:text-gray-100">
-            <Plus size={16} /> Add Row
-          </button>
+          {/* Invoice Header Section */}
+          {salesRows.length > 0 && (
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 mb-6 border border-gray-200 dark:border-neutral-800">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Date */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                    Invoice Date
+                  </label>
+                  <input
+                    type="date"
+                    value={salesRows[0].date}
+                    onChange={e => handleChange(0, "date", e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                  />
+                </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2 bg-black text-white rounded-lg"
-          >
-            {loading ? "Saving..." : "Submit Sales"}
-          </button>
+                {/* Customer */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                    Customer
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={salesRows[0].customer_id}
+                      onChange={e => {
+                        const c = customers.find(c => c.id === e.target.value)
+                        if (!c) return
+                        handleChange(0, "customer_id", c.id)
+                        handleChange(0, "customer_name", c.full_name)
+                      }}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
+                    >
+                      <option value="">Select Customer</option>
+                      {customers.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.full_name} ({c.status})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute right-3 top-3 text-gray-600 dark:text-gray-400">
+                      ▼
+                    </div>
+                  </div>
+                </div>
+
+                {/* Add Customer Button */}
+                <div className="flex items-end">
+                  <button
+                    onClick={() => setCustomerModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition"
+                  >
+                    <Plus size={16} /> Add Customer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Items Section */}
+          <div className="space-y-4 mb-6">
+            {salesRows.map((row, index) => (
+              <div key={index} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-gray-200 dark:border-neutral-800 hover:border-gray-300 dark:hover:border-neutral-700 transition">
+                
+                {/* Item Number */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Item {index + 1}
+                  </h3>
+                  {salesRows.length > 1 && (
+                    <button
+                      onClick={() => removeRow(index)}
+                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                      title="Remove item"
+                    >
+                      <Trash size={18} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Product Selection */}
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                    Product
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={row.product_id}
+                      onChange={e => handleProductSelect(index, e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
+                    >
+                      <option value="">Select Product</option>
+                      {inventory.map(i => (
+                        <option key={i.id} value={i.id}>
+                          {i.product_name} ({i.quantity} in stock)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute right-3 top-3 text-gray-600 dark:text-gray-400">
+                      ▼
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quantity and Price */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="1"
+                      value={row.quantity}
+                      onChange={e => handleChange(index, "quantity", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Sales Price
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={row.sales_price}
+                      onChange={e => handleChange(index, "sales_price", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Status and Outstanding */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={row.status}
+                      onChange={e => handleChange(index, "status", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Part Payment">Part Payment</option>
+                      <option value="Unpaid">Unpaid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Outstanding
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={row.outstanding}
+                      onChange={e => handleChange(index, "outstanding", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Notes / Serial Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                    Serial Number / Notes
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={row.serial_number}
+                    onChange={e => handleChange(index, "serial_number", e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={addRow}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 dark:bg-neutral-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-neutral-700 transition"
+            >
+              <Plus size={18} /> Add Another Item
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {loading ? "Saving..." : "Submit Sales"}
+            </button>
+          </div>
         </div>
       </div>
 

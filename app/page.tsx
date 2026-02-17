@@ -172,7 +172,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-7xl mx-auto md:px-4 sm:px-2 space-y-10">
+      <div className="max-w-7xl mx-auto md:px-4 sm:px-2 space-y-10 md:mt-8">
 
         {/* Profile Header */}
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center shadow-sm">

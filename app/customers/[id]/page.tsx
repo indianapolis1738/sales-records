@@ -3,21 +3,40 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { ChevronLeft, Phone, MessageCircle, Mail, Edit2, Calendar, DollarSign, TrendingUp, Package } from "lucide-react"
+
+type Sale = {
+    id: string
+    user_id: string
+    customer_name: string
+    invoice_number: string
+    date: string
+    total_amount: number
+    total_profit: number
+    outstanding: number
+    status: "Paid" | "Unpaid" | "Part Payment"
+    items?: Array<{
+        product: string
+        quantity: number
+        sales_price: number
+    }>
+}
 
 export default function CustomerProfilePage() {
     const { id } = useParams()
     const router = useRouter()
 
     const [customer, setCustomer] = useState<any>(null)
-    const [sales, setSales] = useState<any[]>([])
+    const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
     const [showEditModal, setShowEditModal] = useState(false)
 
-
     useEffect(() => {
-        fetchCustomer()
-        fetchSales()
-    }, [])
+        if (id) {
+            fetchCustomer()
+            fetchSalesWithItems()
+        }
+    }, [id])
 
     const fetchCustomer = async () => {
         const { data } = await supabase
@@ -29,18 +48,39 @@ export default function CustomerProfilePage() {
         setCustomer(data)
     }
 
-    const fetchSales = async () => {
-        const { data } = await supabase
+    const fetchSalesWithItems = async () => {
+        // Fetch sales for this customer
+        const { data: salesData } = await supabase
             .from("sales")
             .select("*")
-            .eq("customer_id", id)
-            .order("created_at", { ascending: false })
+            .eq("user_id", id)
+            .order("date", { ascending: false })
 
-        setSales(data || [])
+        if (!salesData || salesData.length === 0) {
+            setLoading(false)
+            return
+        }
+
+        // Fetch invoice items for each sale
+        const salesWithItems = await Promise.all(
+            salesData.map(async (sale) => {
+                const { data: itemsData } = await supabase
+                    .from("invoice_items")
+                    .select("product, quantity, sales_price")
+                    .eq("sale_id", sale.id)
+
+                return {
+                    ...sale,
+                    items: itemsData || [],
+                } as Sale
+            })
+        )
+
+        setSales(salesWithItems)
         setLoading(false)
 
-        /* 🔄 AUTO-UPGRADE PROSPECT → CUSTOMER */
-        if (data?.length && customer?.status === "Prospect") {
+        // Update customer status if they have sales
+        if (salesData.length > 0 && customer?.status === "Prospect") {
             await supabase
                 .from("customers")
                 .update({ status: "Customer" })
@@ -49,10 +89,13 @@ export default function CustomerProfilePage() {
     }
 
     if (loading || !customer) {
-        return <div className="p-4 text-slate-500">Loading...</div>
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 flex items-center justify-center">
+                <div className="text-slate-500 dark:text-slate-400">Loading...</div>
+            </div>
+        )
     }
 
-    /* ✅ SAFE CUSTOMER MAPPING */
     const mappedCustomer = {
         full_name: customer.full_name || "Unnamed Customer",
         phone_number: customer.phone_number || "-",
@@ -62,7 +105,7 @@ export default function CustomerProfilePage() {
     }
 
     const totalSales = sales.reduce(
-        (sum, s) => sum + Number(s.sales_price || 0),
+        (sum, s) => sum + Number(s.total_amount || 0),
         0
     )
 
@@ -71,139 +114,178 @@ export default function CustomerProfilePage() {
         0
     )
 
-    /* 📈 CUSTOMER LIFETIME VALUE */
-    const lifetimeValue = totalSales
+    const totalProfit = sales.reduce(
+        (sum, s) => sum + Number(s.total_profit || 0),
+        0
+    )
 
-    /* 📞 PHONE NORMALIZATION (NG) */
+    const totalItems = sales.reduce(
+        (sum, s) => sum + (s.items?.reduce((itemSum, item) => itemSum + item.quantity, 0) || 0),
+        0
+    )
+
     const whatsappNumber =
         mappedCustomer.phone_number !== "-"
             ? mappedCustomer.phone_number.replace(/^0/, "234")
             : null
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "Customer":
+                return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+            case "Lead":
+                return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+            case "Prospect":
+                return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+            default:
+                return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+        }
+    }
+
     return (
-        <div className="p-4 max-w-3xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-start gap-3">
-                <button
-                    onClick={() => router.back()}
-                    className="text-sm text-slate-500 mt-1"
-                >
-                    ←
-                </button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900">
+            <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
 
-                <div className="flex-1">
-                    <h1 className="font-bold text-lg text-slate-900 dark:text-white truncate">
-                        {mappedCustomer.full_name}
-                    </h1>
+                {/* Header */}
+                <div className="mb-8">
+                    <button
+                        onClick={() => router.back()}
+                        className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition mb-4"
+                    >
+                        <ChevronLeft size={20} />
+                        Back
+                    </button>
 
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            {mappedCustomer.status}
-                        </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">
+                                {mappedCustomer.full_name}
+                            </h1>
+                            <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${getStatusColor(mappedCustomer.status)}`}>
+                                {mappedCustomer.status}
+                            </span>
+                        </div>
 
-                        {/* ✏️ EDIT CUSTOMER */}
                         <button
                             onClick={() => setShowEditModal(true)}
-                            className="text-xs text-blue-600"
+                            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition"
                         >
+                            <Edit2 size={18} />
                             Edit
                         </button>
-
                     </div>
                 </div>
-            </div>
 
-            {/* 📞 ACTIONS */}
-            {mappedCustomer.phone_number !== "-" && (
-                <div className="flex gap-3">
-                    <a
-                        href={`tel:${mappedCustomer.phone_number}`}
-                        className="flex-1 text-center py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm"
-                    >
-                        📞 Call
-                    </a>
-
-                    {whatsappNumber && (
+                {/* Contact Actions */}
+                {mappedCustomer.phone_number !== "-" && (
+                    <div className="grid grid-cols-2 gap-3 mb-8">
                         <a
-                            href={`https://wa.me/${whatsappNumber}`}
-                            target="_blank"
-                            className="flex-1 text-center py-3 rounded-xl bg-green-500 text-white text-sm"
+                            href={`tel:${mappedCustomer.phone_number}`}
+                            className="flex items-center justify-center gap-2 px-6 py-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl hover:border-slate-300 dark:hover:border-neutral-700 hover:shadow-md transition"
                         >
-                            💬 WhatsApp
+                            <Phone size={20} className="text-slate-600 dark:text-slate-400" />
+                            <span className="font-semibold text-slate-900 dark:text-white">Call</span>
                         </a>
-                    )}
-                </div>
-            )}
 
-            {/* Customer Info */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 space-y-3 border dark:border-slate-800">
-                <InfoRow label="Phone" value={mappedCustomer.phone_number} />
-                <InfoRow label="Email" value={mappedCustomer.email} />
-                <InfoRow label="Notes" value={mappedCustomer.notes} />
-            </div>
-
-            {/* Summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <SummaryCard
-                    label="Total Sales"
-                    value={`₦${totalSales.toLocaleString()}`}
-                />
-                <SummaryCard
-                    label="Outstanding"
-                    value={`₦${outstanding.toLocaleString()}`}
-                />
-                <SummaryCard
-                    label="Transactions"
-                    value={sales.length}
-                />
-                <SummaryCard
-                    label="Customer Value"
-                    value={`₦${lifetimeValue.toLocaleString()}`}
-                />
-            </div>
-
-            {/* Sales History */}
-            <div className="space-y-3">
-                <h2 className="font-semibold text-slate-700 dark:text-slate-300">
-                    Sales History
-                </h2>
-
-                {sales.length === 0 && (
-                    <p className="text-sm text-slate-500">No sales yet.</p>
+                        {whatsappNumber && (
+                            <a
+                                href={`https://wa.me/${whatsappNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 px-6 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition shadow-sm"
+                            >
+                                <MessageCircle size={20} />
+                                <span>WhatsApp</span>
+                            </a>
+                        )}
+                    </div>
                 )}
 
-                {sales.map((sale) => (
-                    <div
-                        key={sale.id}
-                        className="bg-white dark:bg-slate-900 rounded-xl p-3 border dark:border-slate-800 space-y-1"
-                    >
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">
-                                {new Date(sale.created_at).toLocaleDateString()}
-                            </span>
-                            <span className="font-medium text-slate-900 dark:text-white">
-                                ₦{Number(sale.sales_price).toLocaleString()}
-                            </span>
-                        </div>
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <MetricCard
+                        icon={<DollarSign size={24} />}
+                        label="Total Sales"
+                        value={`₦${totalSales.toLocaleString()}`}
+                        color="blue"
+                    />
+                    <MetricCard
+                        icon={<TrendingUp size={24} />}
+                        label="Total Profit"
+                        value={`₦${totalProfit.toLocaleString()}`}
+                        color="green"
+                    />
+                    <MetricCard
+                        icon={<DollarSign size={24} />}
+                        label="Outstanding"
+                        value={`₦${outstanding.toLocaleString()}`}
+                        color="amber"
+                    />
+                    <MetricCard
+                        icon={<Calendar size={24} />}
+                        label="Transactions"
+                        value={sales.length.toString()}
+                        color="purple"
+                    />
+                </div>
 
-                        <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500">
-                                Outstanding: ₦{Number(sale.outstanding || 0).toLocaleString()}
-                            </span>
+                {/* Customer Information */}
+                <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 mb-8 shadow-sm">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Customer Information</h2>
 
-                            <span
-                                className={`px-2 py-0.5 rounded-full
-                  ${sale.status === "Paid" && "bg-green-100 text-green-700"}
-                  ${sale.status === "Unpaid" && "bg-yellow-100 text-yellow-700"}
-                  ${sale.status === "Part Payment" && "bg-orange-100 text-orange-700"}
-                `}
-                            >
-                                {sale.status}
-                            </span>
-                        </div>
+                    <div className="space-y-4">
+                        {mappedCustomer.phone_number !== "-" && (
+                            <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-neutral-800">
+                                <Phone size={20} className="text-slate-400 dark:text-slate-600 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Phone</p>
+                                    <p className="text-slate-900 dark:text-white font-medium truncate">{mappedCustomer.phone_number}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {mappedCustomer.email !== "-" && (
+                            <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-neutral-800">
+                                <Mail size={20} className="text-slate-400 dark:text-slate-600 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Email</p>
+                                    <p className="text-slate-900 dark:text-white font-medium truncate">{mappedCustomer.email}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {mappedCustomer.notes !== "-" && (
+                            <div className="pt-2">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Notes</p>
+                                <p className="text-slate-900 dark:text-white text-sm leading-relaxed">{mappedCustomer.notes}</p>
+                            </div>
+                        )}
                     </div>
-                ))}
+                </div>
+
+                {/* Sales History */}
+                <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Sales History</h2>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">{sales.length} transaction{sales.length !== 1 ? "s" : ""}</span>
+                    </div>
+
+                    {sales.length === 0 ? (
+                        <div className="text-center py-12">
+                            <DollarSign size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
+                            <p className="text-slate-600 dark:text-slate-400 font-medium">No sales yet</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Start by adding a sale for this customer</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {sales.map((sale) => (
+                                <SaleRow key={sale.id} sale={sale} />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
+
             {showEditModal && (
                 <EditCustomerModal
                     customer={customer}
@@ -211,33 +293,101 @@ export default function CustomerProfilePage() {
                     onUpdated={fetchCustomer}
                 />
             )}
-
         </div>
     )
 }
 
-/* ---------------- Reusable UI ---------------- */
+/* Metric Card Component */
+function MetricCard({ icon, label, value, color }: any) {
+    const colorMap: Record<string, string> = {
+        blue: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400",
+        green: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400",
+        amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400",
+        purple: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400",
+    }
 
-function InfoRow({ label, value }: any) {
     return (
-        <div className="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-2 text-sm">
-            <span className="text-slate-500">{label}</span>
-            <span className="text-slate-900 dark:text-white font-medium text-right">
-                {value}
-            </span>
+        <div className={`rounded-xl p-4 border ${colorMap[color]}`}>
+            <div className="flex items-center gap-2 mb-2">
+                {icon}
+            </div>
+            <p className="text-sm font-medium opacity-80">{label}</p>
+            <p className="text-2xl font-bold mt-1">{value}</p>
         </div>
     )
 }
 
-function SummaryCard({ label, value }: any) {
+/* Sale Row Component */
+function SaleRow({ sale }: any) {
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case "Paid":
+                return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+            case "Unpaid":
+                return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+            case "Part Payment":
+                return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+            default:
+                return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+        }
+    }
+
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border dark:border-slate-800">
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="font-semibold text-slate-900 dark:text-white">{value}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-slate-200 dark:border-neutral-700 rounded-xl hover:border-slate-300 dark:hover:border-neutral-600 transition space-y-3 sm:space-y-0">
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between sm:flex-col sm:items-start mb-2 sm:mb-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        Invoice: {sale.invoice_number}
+                    </p>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-md ${getStatusBadge(sale.status)}`}>
+                        {sale.status}
+                    </span>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    {new Date(sale.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                    })}
+                </p>
+                
+                {/* Items List */}
+                {sale.items && sale.items.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                        {sale.items.map((item: any, idx: number) => (
+                            <p key={idx} className="text-xs text-slate-500 dark:text-slate-400">
+                                • {item.product} × {item.quantity}
+                            </p>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="flex items-end justify-between sm:flex-col sm:items-end sm:text-right space-x-4 sm:space-x-0">
+                <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Amount</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                        ₦{Number(sale.total_amount).toLocaleString()}
+                    </p>
+                </div>
+                <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Profit</p>
+                    <p className="font-semibold text-green-600 dark:text-green-400">
+                        ₦{Number(sale.total_profit).toLocaleString()}
+                    </p>
+                </div>
+                <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Outstanding</p>
+                    <p className={`font-semibold ${Number(sale.outstanding) > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>
+                        ₦{Number(sale.outstanding).toLocaleString()}
+                    </p>
+                </div>
+            </div>
         </div>
     )
 }
 
+/* Edit Customer Modal */
 function EditCustomerModal({ customer, onClose, onUpdated }: any) {
     const [fullName, setFullName] = useState(customer.full_name || "")
     const [phone, setPhone] = useState(customer.phone_number || "")
@@ -266,53 +416,86 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
     }
 
     return (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-            <div className="bg-white dark:bg-slate-900 w-full rounded-t-2xl p-4 space-y-4">
-                <h2 className="font-semibold text-lg">Edit Customer</h2>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center sm:justify-center p-4">
+            <div className="bg-white dark:bg-neutral-900 w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Edit Customer</h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Update customer information</p>
+                </div>
 
-                <input
-                    className="w-full border rounded-md p-2 text-sm"
-                    placeholder="Full name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                />
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                            Full Name
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                            placeholder="Full name"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                        />
+                    </div>
 
-                <input
-                    className="w-full border rounded-md p-2 text-sm"
-                    placeholder="Phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                />
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                            Phone Number
+                        </label>
+                        <input
+                            type="tel"
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                            placeholder="Phone number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                        />
+                    </div>
 
-                <input
-                    className="w-full border rounded-md p-2 text-sm"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                            placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
 
-                <textarea
-                    className="w-full border rounded-md p-2 text-sm"
-                    placeholder="Notes"
-                    rows={3}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                />
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                            Status
+                        </label>
+                        <select
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                        >
+                            <option>Prospect</option>
+                            <option>Lead</option>
+                            <option>Customer</option>
+                        </select>
+                    </div>
 
-                <select
-                    className="w-full border rounded-md p-2 text-sm"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                >
-                    <option>Prospect</option>
-                    <option>Lead</option>
-                    <option>Customer</option>
-                </select>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                            Notes
+                        </label>
+                        <textarea
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition resize-none"
+                            placeholder="Add notes about this customer"
+                            rows={4}
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                </div>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
                     <button
                         onClick={onClose}
-                        className="flex-1 border rounded-md p-2 text-sm"
+                        className="flex-1 px-6 py-3 border border-slate-300 dark:border-neutral-700 rounded-lg text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
                     >
                         Cancel
                     </button>
@@ -320,7 +503,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 bg-black text-white rounded-md p-2 text-sm"
+                        className="flex-1 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                         {saving ? "Saving..." : "Save Changes"}
                     </button>

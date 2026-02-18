@@ -267,7 +267,7 @@ export default function Sales() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
             label="Total Sales"
             value={monthlySales}
@@ -280,6 +280,7 @@ export default function Sales() {
             icon={<TrendingUp size={24} />}
             color="green"
           />
+          <div className="hidden lg:block">
           <StatCard
             label="vs Last Month"
             value={monthComparison}
@@ -288,6 +289,7 @@ export default function Sales() {
             icon={monthComparison >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
             color={monthComparison >= 0 ? "green" : "red"}
           />
+          </div>
         </div>
 
         {/* Sales Table/List */}
@@ -464,7 +466,7 @@ function StatCard({
       </div>
       <div>
         <p className="text-xs sm:text-sm font-medium opacity-80">{label}</p>
-        <p className={`text-2xl sm:text-3xl font-bold mt-1 ${disabled ? "opacity-50" : ""}`}>
+        <p className={`text-md md:text-3xl font-bold mt-1 ${disabled ? "opacity-50" : ""}`}>
           {percentage
             ? `${value.toFixed(1)}%`
             : `₦${value.toLocaleString()}`

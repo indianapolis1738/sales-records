@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { Plus, X, Trash } from "lucide-react"
+import { Plus, X, Trash2, ChevronDown, User, Package, Calendar, AlertCircle } from "lucide-react"
 
 export default function AddSale() {
   const router = useRouter()
@@ -24,7 +24,7 @@ export default function AddSale() {
   // 🔹 MULTI SALE ROWS
   const [salesRows, setSalesRows] = useState([
     {
-      date: '',
+      date: new Date().toISOString().split("T")[0],
       customer_id: "",
       customer_name: "",
       product_id: "",
@@ -86,7 +86,6 @@ export default function AddSale() {
   }
 
   const addRow = () => {
-    // Get customer info from the first row
     const firstRowCustomer = salesRows[0]
     
     setSalesRows([
@@ -118,6 +117,12 @@ export default function AddSale() {
     return `INV-${Date.now()}`
   }
 
+  const calculateProfit = (costPrice: string, salesPrice: string, quantity: string) => {
+    const cost = Number(costPrice) || 0
+    const sales = Number(salesPrice) || 0
+    const qty = Number(quantity) || 0
+    return (sales - cost) * qty
+  }
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -215,39 +220,42 @@ export default function AddSale() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 p-4 sm:p-6 ">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="max-w-5xl mx-auto">
           
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Add Sale(s)
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+              Add Sale
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Add one or multiple items to a single invoice
             </p>
           </div>
 
           {/* Invoice Header Section */}
           {salesRows.length > 0 && (
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 mb-6 border border-gray-200 dark:border-neutral-800">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-6 mb-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Invoice Details</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Date */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                    <Calendar size={14} className="inline mr-1" />
                     Invoice Date
                   </label>
                   <input
                     type="date"
                     value={salesRows[0].date}
                     onChange={e => handleChange(0, "date", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                    className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 sm:px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
                   />
                 </div>
 
                 {/* Customer */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                    <User size={14} className="inline mr-1" />
                     Customer
                   </label>
                   <div className="relative">
@@ -259,18 +267,16 @@ export default function AddSale() {
                         handleChange(0, "customer_id", c.id)
                         handleChange(0, "customer_name", c.full_name)
                       }}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
+                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 sm:px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
                     >
                       <option value="">Select Customer</option>
                       {customers.map(c => (
                         <option key={c.id} value={c.id}>
-                          {c.full_name} ({c.status})
+                          {c.full_name} • {c.status}
                         </option>
                       ))}
                     </select>
-                    <div className="pointer-events-none absolute right-3 top-3 text-gray-600 dark:text-gray-400">
-                      ▼
-                    </div>
+                    <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 dark:text-slate-600 pointer-events-none" />
                   </div>
                 </div>
 
@@ -278,9 +284,9 @@ export default function AddSale() {
                 <div className="flex items-end">
                   <button
                     onClick={() => setCustomerModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-sm font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition"
                   >
-                    <Plus size={16} /> Add Customer
+                    <Plus size={16} /> New Customer
                   </button>
                 </div>
               </div>
@@ -288,138 +294,164 @@ export default function AddSale() {
           )}
 
           {/* Items Section */}
-          <div className="space-y-4 mb-6">
+          <div className="space-y-4 mb-8">
             {salesRows.map((row, index) => (
-              <div key={index} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-gray-200 dark:border-neutral-800 hover:border-gray-300 dark:hover:border-neutral-700 transition">
+              <div key={index} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm hover:border-slate-300 dark:hover:border-neutral-700 transition overflow-hidden">
                 
-                {/* Item Number */}
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {/* Item Header */}
+                <div className="bg-slate-50 dark:bg-neutral-800/50 px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Item {index + 1}
                   </h3>
                   {salesRows.length > 1 && (
                     <button
                       onClick={() => removeRow(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                       title="Remove item"
                     >
-                      <Trash size={18} />
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>
 
-                {/* Product Selection */}
-                <div className="mb-4">
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                    Product
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={row.product_id}
-                      onChange={e => handleProductSelect(index, e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
-                    >
-                      <option value="">Select Product</option>
-                      {inventory.map(i => (
-                        <option key={i.id} value={i.id}>
-                          {i.product_name} ({i.quantity} in stock)
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute right-3 top-3 text-gray-600 dark:text-gray-400">
-                      ▼
+                <div className="p-4 sm:p-6 space-y-4">
+                  {/* Product Selection */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                      <Package size={14} className="inline mr-1" />
+                      Product
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={row.product_id}
+                        onChange={e => handleProductSelect(index, e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 sm:px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
+                      >
+                        <option value="">Select Product</option>
+                        {inventory.map(i => (
+                          <option key={i.id} value={i.id}>
+                            {i.product_name} • {i.quantity} in stock
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 dark:text-slate-600 pointer-events-none" />
                     </div>
                   </div>
-                </div>
 
-                {/* Quantity and Price */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Quantity and Prices Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        value={row.quantity}
+                        onChange={e => handleChange(index, "quantity", e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Cost Price
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={row.cost_price}
+                        onChange={e => handleChange(index, "cost_price", e.target.value)}
+                        disabled
+                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition opacity-75"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Sales Price
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={row.sales_price}
+                        onChange={e => handleChange(index, "sales_price", e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Profit
+                      </label>
+                      <div className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-semibold flex items-center">
+                        ₦{calculateProfit(row.cost_price, row.sales_price, row.quantity).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Status and Outstanding */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Status
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={row.status}
+                          onChange={e => handleChange(index, "status", e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Part Payment">Part Payment</option>
+                          <option value="Unpaid">Unpaid</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 dark:text-slate-600 pointer-events-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                        Outstanding
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={row.outstanding}
+                        onChange={e => handleChange(index, "outstanding", e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Serial Number / Notes */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      Quantity
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                      Serial Number / Notes
                     </label>
                     <input
-                      type="number"
-                      placeholder="1"
-                      value={row.quantity}
-                      onChange={e => handleChange(index, "quantity", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
+                      type="text"
+                      placeholder="Optional"
+                      value={row.serial_number}
+                      onChange={e => handleChange(index, "serial_number", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 sm:px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      Sales Price
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      value={row.sales_price}
-                      onChange={e => handleChange(index, "sales_price", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Payment Status and Outstanding */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      Status
-                    </label>
-                    <select
-                      value={row.status}
-                      onChange={e => handleChange(index, "status", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition appearance-none"
-                    >
-                      <option value="Paid">Paid</option>
-                      <option value="Part Payment">Part Payment</option>
-                      <option value="Unpaid">Unpaid</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      Outstanding
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      value={row.outstanding}
-                      onChange={e => handleChange(index, "outstanding", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Notes / Serial Number */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                    Serial Number / Notes
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Optional"
-                    value={row.serial_number}
-                    onChange={e => handleChange(index, "serial_number", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition"
-                  />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
             <button
               onClick={addRow}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 dark:bg-neutral-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-neutral-700 transition"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 border border-slate-300 dark:border-neutral-700 text-slate-900 dark:text-white rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
             >
               <Plus size={18} /> Add Another Item
             </button>
 
             <button
               onClick={handleSubmit}
-              disabled={loading}
-              className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              disabled={loading || !salesRows[0].customer_id}
+              className="flex-1 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading ? "Saving..." : "Submit Sales"}
             </button>
@@ -439,19 +471,21 @@ export default function AddSale() {
   )
 }
 
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="w-full rounded-lg border px-3 py-2 text-sm bg-white dark:bg-neutral-900"
-    />
-  )
-}
-
 function CustomerModal({ newCustomer, setNewCustomer, setCustomerModalOpen, fetchCustomers }: any) {
+  const [saving, setSaving] = useState(false)
+
   const handleSave = async () => {
+    if (!newCustomer.full_name.trim()) {
+      alert("Please enter customer name")
+      return
+    }
+
+    setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setSaving(false)
+      return
+    }
 
     await supabase.from("customers").insert({
       user_id: user.id,
@@ -463,6 +497,7 @@ function CustomerModal({ newCustomer, setNewCustomer, setCustomerModalOpen, fetc
     setNewCustomer({ full_name: "", phone_number: "", status: "Prospect" })
     setCustomerModalOpen(false)
     fetchCustomers()
+    setSaving(false)
   }
 
   const pickFromContacts = async () => {
@@ -487,48 +522,93 @@ function CustomerModal({ newCustomer, setNewCustomer, setCustomerModalOpen, fetc
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-      <div className="bg-white dark:bg-neutral-900 w-full rounded-t-2xl p-4 space-y-4">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center sm:justify-center p-4">
+      <div className="bg-white dark:bg-neutral-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 p-4 sm:p-6 space-y-4 sm:space-y-6">
+        
+        {/* Header */}
         <div className="flex justify-between items-center">
-          <h2 className="font-semibold">Add Customer</h2>
-          <button onClick={() => setCustomerModalOpen(false)}>
-            <X size={18} />
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
+            Add Customer
+          </h2>
+          <button
+            onClick={() => setCustomerModalOpen(false)}
+            className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white transition"
+          >
+            <X size={20} />
           </button>
         </div>
 
+        {/* Contact Import Button */}
         <button
           onClick={pickFromContacts}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border text-sm"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
         >
           📇 Import from Contacts
         </button>
 
-        <Input
-          placeholder="Full name"
-          value={newCustomer.full_name}
-          onChange={e => setNewCustomer({ ...newCustomer, full_name: e.target.value })}
-        />
-        <Input
-          placeholder="Phone number"
-          value={newCustomer.phone_number}
-          onChange={e => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
-        />
-        <select
-          value={newCustomer.status}
-          onChange={e => setNewCustomer({ ...newCustomer, status: e.target.value })}
-          className="w-full rounded-lg border px-3 py-2"
-        >
-          <option>Prospect</option>
-          <option>Lead</option>
-          <option>Customer</option>
-        </select>
+        {/* Inputs */}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter customer name"
+              value={newCustomer.full_name}
+              onChange={e => setNewCustomer({ ...newCustomer, full_name: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+            />
+          </div>
 
-        <button
-          onClick={handleSave}
-          className="w-full bg-black text-white py-2 rounded"
-        >
-          Save Customer
-        </button>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              placeholder="Enter phone number"
+              value={newCustomer.phone_number}
+              onChange={e => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Status
+            </label>
+            <div className="relative">
+              <select
+                value={newCustomer.status}
+                onChange={e => setNewCustomer({ ...newCustomer, status: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
+              >
+                <option value="Prospect">Prospect</option>
+                <option value="Lead">Lead</option>
+                <option value="Customer">Customer</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 dark:text-slate-600 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
+          <button
+            onClick={() => setCustomerModalOpen(false)}
+            className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !newCustomer.full_name.trim()}
+            className="flex-1 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {saving ? "Saving..." : "Save Customer"}
+          </button>
+        </div>
       </div>
     </div>
   )

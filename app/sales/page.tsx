@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import StatusBadge from "@/components/StatusBadge"
-import { Plus, Download, ChevronDown } from "lucide-react"
+import { Plus, Download, ChevronDown, TrendingUp, TrendingDown, DollarSign, Filter } from "lucide-react"
 import * as XLSX from "xlsx"
 import Skeleton from "@/components/Skeleton"
 
@@ -32,7 +32,7 @@ export default function Sales() {
       setLoading(true)
       const { data: salesData } = await supabase
         .from("sales")
-        .select("*, date")
+        .select("*")
         .order("date", { ascending: false })
 
       const { data: expensesData } = await supabase
@@ -44,13 +44,13 @@ export default function Sales() {
 
       setSales(allSales)
 
-      // 🔹 Extract years dynamically from sales data
+      // Extract years dynamically from sales data
       const yearsFromSales = Array.from(
         new Set(allSales.map((s) => new Date(s.date).getFullYear()))
       ).sort((a, b) => b - a)
       setAvailableYears(yearsFromSales)
 
-      // 🔹 Filter sales by month/year
+      // Filter sales by month/year
       const filteredSales =
         selectedMonth === "all" || selectedYear === "all"
           ? allSales
@@ -79,8 +79,7 @@ export default function Sales() {
       )
 
       const gainBeforeExpenses = filteredSales.reduce(
-        (sum, s) =>
-          sum + (Number(s.total_profit || 0) ),
+        (sum, s) => sum + (Number(s.total_profit || 0)),
         0
       )
 
@@ -136,255 +135,342 @@ export default function Sales() {
 
     const formattedData = filteredSales.map((sale) => ({
       Date: sale.date,
-      Customer: sale.customer,
-      Product: sale.product,
-      "Cost Price": Number(sale.cost_price),
-      "Sales Price": Number(sale.total_amount),
-      Profit: Number(sale.total_amount) - Number(sale.cost_price),
+      Customer: sale.customer_name,
+      "Total Amount": Number(sale.total_amount),
+      "Total Profit": Number(sale.total_profit),
       Status: sale.status,
       Outstanding: Number(sale.outstanding),
-      "Created At": new Date(sale.created_at).toLocaleString()
     }))
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData)
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sales")
-    XLSX.writeFile(workbook, "sales-records.xlsx")
+    XLSX.writeFile(
+      workbook,
+      `sales-${selectedMonth === "all" ? "all" : MONTHS[selectedMonth]}-${selectedYear}.xlsx`
+    )
 
     setExporting(false)
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh] text-gray-500 dark:text-gray-400">
-        <Skeleton/>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Skeleton className="h-10 w-1/3 rounded-lg" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-96 w-full rounded-xl" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 space-y-6 text-gray-900 dark:text-gray-100">
-      {/* Header */}
-      <div className="md:flex justify-between items-center px-4">
-        <h2 className="text-2xl font-bold">
-          Sales —{" "}
-          {selectedMonth === "all" || selectedYear === "all"
-            ? "All Time"
-            : `${MONTHS[selectedMonth]} ${selectedYear}`}
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
 
-        <div className="flex gap-2 mt-4 md:mt-0">
-          <button
-            onClick={exportToExcel}
-            disabled={exporting || filteredSales.length === 0}
-            className="flex items-center gap-1 px-4 py-2 border rounded-lg text-sm bg-gray-100 dark:bg-gray-800 disabled:opacity-50"
-          >
-            <Download size={16} />
-            {exporting ? "Exporting..." : "Export"}
-          </button>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+              Sales
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+              {selectedMonth === "all" || selectedYear === "all"
+                ? "All time sales"
+                : `${MONTHS[selectedMonth]} ${selectedYear}`}
+            </p>
+          </div>
 
-          <a
-            href="/sales/new"
-            className="flex items-center gap-1 px-4 py-2 bg-black text-white rounded-lg text-sm"
-          >
-            <Plus size={16} />
-            Add Sale
-          </a>
-        </div>
-      </div>
-
-      {/* Month + Year Selector */}
-      <div className="relative px-4 w-fit">
-        <button
-          onClick={() => setOpenDropdown(!openDropdown)}
-          className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-        >
-          {selectedMonth === "all" || selectedYear === "all"
-            ? "All Sales"
-            : `${MONTHS[selectedMonth]} ${selectedYear}`}
-          <ChevronDown size={16} />
-        </button>
-
-        {openDropdown && (
-          <div className="absolute z-10 mt-2 w-56 max-h-80 overflow-y-auto bg-white dark:bg-gray-900 border rounded-lg shadow-lg p-2 space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => {
-                setSelectedMonth("all")
-                setSelectedYear("all")
-                setOpenDropdown(false)
-              }}
-              className={`w-full text-left px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 ${
-                selectedMonth === "all" && selectedYear === "all"
-                  ? "bg-gray-200 dark:bg-gray-700 font-semibold"
-                  : ""
-              }`}
+              onClick={exportToExcel}
+              disabled={exporting || filteredSales.length === 0}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              All Sales
+              <Download size={18} />
+              <span className="hidden sm:inline">{exporting ? "Exporting..." : "Export"}</span>
+              <span className="sm:hidden">{exporting ? "..." : "Export"}</span>
             </button>
 
-            {availableYears.map((y) => (
-              <div key={y} className="space-y-1">
-                <p className="px-4 py-1 font-medium text-gray-600 dark:text-gray-400">{y}</p>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {MONTHS.map((m, i) => (
-                    <button
-                      key={m + y}
-                      onClick={() => {
-                        setSelectedMonth(i)
-                        setSelectedYear(y)
-                        setOpenDropdown(false)
-                      }}
-                      className={`px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 ${
-                        selectedMonth === i && selectedYear === y
-                          ? "bg-black text-white"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <a
+              href="/sales/new"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Add Sale</span>
+              <span className="sm:hidden">Add</span>
+            </a>
           </div>
-        )}
-      </div>
-
-      {/* Stats */}
-      <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
-        {/* Desktop */}
-        <Stat label="Sales" value={monthlySales} />
-        <Stat label="Net Gain" value={monthlyGain} />
-        <Stat
-          label="Compared to last month"
-          value={monthComparison}
-          percentage
-          disabled={selectedMonth === "all" || selectedYear === "all"}
-        />
-      </div>
-
-      {/* Mobile Stats */}
-      <div className="md:hidden grid grid-cols-2 gap-2 px-4">
-        <div className="rounded-xl border p-2 bg-gray-50 dark:bg-gray-900 text-xs">
-          <p className="text-gray-500 dark:text-gray-400">Amount Sold</p>
-          <p className="font-semibold text-sm">₦{monthlySales.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl border p-2 bg-gray-50 dark:bg-gray-900 text-xs">
-          <p className="text-gray-500 dark:text-gray-400">Profit</p>
-          <p className="font-semibold text-sm">₦{monthlyGain.toLocaleString()}</p>
-        </div>
-      </div>
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 dark:bg-gray-900 mx-4">
-        <table className="w-full text-sm table-fixed">
-          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-            <tr>
-              <th className="py-3 px-4 text-left">Date</th>
-              <th className="py-3 px-4 text-left">Customer</th>
-              {/* <th className="py-3 px-4 text-left">Product</th> */}
-              <th className="py-3 px-4 text-left">Sales</th>
-              <th className="py-3 px-4 text-left">Status</th>
-              <th className="py-3 px-4 text-left">Outstanding</th>
-              <th className="py-3 px-4 text-left">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredSales.map((sale) => (
-              <tr
-                key={sale.id}
-                className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                onClick={() => window.location.href = `/sales/${sale.id}/info`}
-              >
-                <td className="py-3 px-4">{sale.date}</td>
-                <td className="py-3 px-4 font-medium">{sale.customer_name}</td>
-                {/* <td className="py-3 px-4">{sale.product}</td> */}
-                <td className="py-3 px-4 font-medium">
-                  ₦{Number(sale.total_amount).toLocaleString()}
-                </td>
-                <td className="py-3 px-4">
-                  <StatusBadge status={sale.status} />
-                </td>
-                <td className="py-3 px-4">
-                  ₦{Number(sale.outstanding || 0).toLocaleString()}
-                </td>
-                <td className="py-3 px-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      window.location.href = `/sales/${sale.id}`
-                    }}
-                    className="text-sm underline"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {filteredSales.length === 0 && (
-              <tr>
-                <td colSpan={7} className="py-16 text-center text-gray-600 dark:text-gray-400">
-                  No sales for this period.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile List */}
-      <div className="md:hidden space-y-4 px-4">
-        {filteredSales.map((sale) => (
-          <div
-            key={sale.id}
-            className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-2 hover:shadow-md transition"
-            onClick={() => window.location.href = `/sales/${sale.id}/info`}
+        {/* Filter Button & Month Selector */}
+        <div className="relative w-full sm:w-fit">
+          <button
+            onClick={() => setOpenDropdown(!openDropdown)}
+            className="flex items-center gap-2 px-4 py-2.5 w-full sm:w-auto border border-slate-300 dark:border-neutral-700 rounded-lg text-sm font-semibold bg-white dark:bg-neutral-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
           >
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium text-gray-800 dark:text-gray-100">{sale.customer_name}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{sale.product}</p>
+            <Filter size={18} />
+            {selectedMonth === "all" || selectedYear === "all"
+              ? "All Sales"
+              : `${MONTHS[selectedMonth]} ${selectedYear}`}
+            <ChevronDown size={16} className={`ml-auto sm:ml-2 transition ${openDropdown ? "rotate-180" : ""}`} />
+          </button>
+
+          {openDropdown && (
+            <div className="absolute z-20 mt-2 w-full sm:w-80 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border border-slate-300 dark:border-neutral-700 rounded-xl shadow-lg p-4 space-y-4">
+              <button
+                onClick={() => {
+                  setSelectedMonth("all")
+                  setSelectedYear("all")
+                  setOpenDropdown(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-lg font-semibold text-sm transition ${
+                  selectedMonth === "all" && selectedYear === "all"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                    : "bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-neutral-700"
+                }`}
+              >
+                All Sales
+              </button>
+
+              {availableYears.map((y) => (
+                <div key={y} className="space-y-3">
+                  <p className="px-2 py-1 font-bold text-slate-900 dark:text-white text-sm">{y}</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {MONTHS.map((m, i) => (
+                      <button
+                        key={m + y}
+                        onClick={() => {
+                          setSelectedMonth(i)
+                          setSelectedYear(y)
+                          setOpenDropdown(false)
+                        }}
+                        className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                          selectedMonth === i && selectedYear === y
+                            ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                            : "bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-neutral-700"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard
+            label="Total Sales"
+            value={monthlySales}
+            icon={<DollarSign size={24} />}
+            color="blue"
+          />
+          <StatCard
+            label="Total Profit"
+            value={monthlyGain}
+            icon={<TrendingUp size={24} />}
+            color="green"
+          />
+          <StatCard
+            label="vs Last Month"
+            value={monthComparison}
+            percentage
+            disabled={selectedMonth === "all" || selectedYear === "all"}
+            icon={monthComparison >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
+            color={monthComparison >= 0 ? "green" : "red"}
+          />
+        </div>
+
+        {/* Sales Table/List */}
+        <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-neutral-800/50 border-b border-slate-200 dark:border-neutral-700">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Profit</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Outstanding</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-neutral-700">
+                {filteredSales.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-600 dark:text-slate-400">
+                      <DollarSign size={48} className="mx-auto text-slate-300 dark:text-neutral-700 mb-3" />
+                      <p className="font-medium">No sales for this period</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSales.map((sale) => (
+                    <tr
+                      key={sale.id}
+                      className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition"
+                    >
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                        {new Date(sale.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric"
+                        })}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                        {sale.customer_name}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white">
+                        ₦{Number(sale.total_amount).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-green-600 dark:text-green-400">
+                        ₦{Number(sale.total_profit).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusBadge status={sale.status} />
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                        ₦{Number(sale.outstanding || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <a
+                          href={`/sales/${sale.id}`}
+                          className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+                        >
+                          Edit
+                        </a>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile List */}
+          <div className="lg:hidden divide-y divide-slate-200 dark:divide-neutral-700">
+            {filteredSales.length === 0 ? (
+              <div className="py-12 text-center px-4">
+                <DollarSign size={40} className="mx-auto text-slate-300 dark:text-neutral-700 mb-3" />
+                <p className="font-medium text-slate-600 dark:text-slate-400">No sales for this period</p>
               </div>
-              <StatusBadge status={sale.status} />
-            </div>
+            ) : (
+              filteredSales.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="p-4 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition cursor-pointer"
+                  onClick={() => window.location.href = `/sales/${sale.id}/info`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                        {sale.customer_name}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                        {new Date(sale.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric"
+                        })}
+                      </p>
+                    </div>
+                    <StatusBadge status={sale.status} />
+                  </div>
 
-            <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-              <span>{sale.date}</span>
-              <span className="font-medium">
-                ₦{Number(sale.total_amount).toLocaleString()}
-              </span>
-            </div>
-          </div>
-        ))}
+                  <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-neutral-700">
+                    <div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Amount</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        ₦{Number(sale.total_amount).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Profit</p>
+                      <p className="font-semibold text-green-600 dark:text-green-400 text-sm">
+                        ₦{Number(sale.total_profit).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Outstanding</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        ₦{Number(sale.outstanding || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
 
-        {filteredSales.length === 0 && (
-          <div className="text-center text-gray-600 dark:text-gray-400 py-16">
-            No sales for this period.
+                  <a
+                    href={`/sales/${sale.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+                  >
+                    Edit Sale →
+                  </a>
+                </div>
+              ))
+            )}
           </div>
-        )}
+        </div>
+
       </div>
+
+      {/* Floating Action Button - Mobile */}
+      <a
+        href="/sales/new"
+        className="fixed bottom-6 right-4 lg:hidden w-14 h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:shadow-xl transition active:scale-95 z-40"
+      >
+        <Plus size={24} />
+      </a>
     </div>
   )
 }
 
-/* 🔹 SMALL STAT COMPONENT */
-function Stat({ label, value, percentage, disabled }: any) {
+function StatCard({
+  label,
+  value,
+  percentage,
+  disabled,
+  icon,
+  color,
+}: {
+  label: string
+  value: number
+  percentage?: boolean
+  disabled?: boolean
+  icon: React.ReactNode
+  color: "blue" | "green" | "red"
+}) {
+  const colorMap = {
+    blue: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400",
+    green: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400",
+    red: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400",
+  }
+
   return (
-    <div className="rounded-xl border p-4 bg-gray-50 dark:bg-gray-900">
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p
-        className={`text-xl font-semibold ${
-          disabled
-            ? "text-gray-400"
-            : value >= 0
-            ? "text-green-600"
-            : "text-red-600"
-        }`}
-      >
-        {percentage ? `${value.toFixed(1)}%` : `₦${value.toLocaleString()}`}
-      </p>
+    <div className={`rounded-xl border p-4 sm:p-6 space-y-3 ${colorMap[color]}`}>
+      <div className="flex items-center">
+        <div className="p-2 bg-white/50 dark:bg-neutral-800/50 rounded-lg">
+          {icon}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs sm:text-sm font-medium opacity-80">{label}</p>
+        <p className={`text-2xl sm:text-3xl font-bold mt-1 ${disabled ? "opacity-50" : ""}`}>
+          {percentage
+            ? `${value.toFixed(1)}%`
+            : `₦${value.toLocaleString()}`
+          }
+        </p>
+      </div>
     </div>
   )
 }

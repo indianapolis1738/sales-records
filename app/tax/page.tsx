@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import { ArrowLeft, Download } from "lucide-react"
+import { ArrowLeft, Download, TrendingUp, DollarSign, AlertCircle, Receipt } from "lucide-react"
 import Skeleton from "@/components/Skeleton"
 
 type Expense = {
@@ -101,10 +101,17 @@ export default function TaxDashboard() {
   const handleAddExpense = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    
+    if (!newExpense.description.trim() || !newExpense.amount) {
+      alert("Please fill in all fields")
+      return
+    }
+
     setSavingExpense(true)
 
     await supabase.from("expenses").insert([{
       user_id: user.id,
+      date: new Date().toISOString().split("T")[0],
       description: newExpense.description,
       category: newExpense.category,
       amount: Number(newExpense.amount)
@@ -130,177 +137,398 @@ export default function TaxDashboard() {
     const blob = new Blob([csv], { type: "text/csv" })
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
-    link.download = "tax_report.csv"
+    link.download = `tax_report_${period}.csv`
     link.click()
   }
 
-  if (loading) return (
-    <ProtectedRoute>
-      <Skeleton className="h-6 w-1/3 mb-6" />
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
-      </div>
-      <div className="mt-10">
-        <Skeleton className="h-6 w-1/4 mb-4" />
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    </ProtectedRoute>
-  )
-
-  return (
-    <ProtectedRoute>
-      <div className="max-w-6xl mx-auto p-6 sm:p-8 md:mt-10 space-y-6 bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-gray-200 dark:border-neutral-700">
-
-        {/* Back & Export */}
-        <div className="flex justify-between items-center">
-          <button onClick={() => history.back()} className="flex items-center gap-2 px-3 py-1 border rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-sm">
-            <ArrowLeft size={16} /> Back
-          </button>
-          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-1 bg-black dark:bg-gray-200 dark:text-black text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-300 transition text-sm">
-            <Download size={16} /> Export Report
-          </button>
-        </div>
-
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Tax Dashboard</h2>
-
-        {/* Tabs */}
-        <div className="flex gap-2 border-b border-gray-300 dark:border-neutral-700 mb-4">
-          <TabButton active={tab === "tax"} onClick={() => setTab("tax")}>Tax Calculation</TabButton>
-          <TabButton active={tab === "expenses"} onClick={() => setTab("expenses")}>Expenses</TabButton>
-        </div>
-
-        {tab === "tax" && (
-          <>
-            <div className="flex gap-2 text-sm mb-4">
-              {["month", "quarter", "year"].map(p => (
-                <PeriodButton key={p} active={period === p} onClick={() => setPeriod(p as any)}>
-                  {p === "month" ? "This Month" : p === "quarter" ? "This Quarter" : "This Year"}
-                </PeriodButton>
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <Skeleton className="h-10 w-1/3 rounded-lg" />
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-xl" />
               ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              <StatCard title="Total Sales" value={`₦${stats.totalSales.toLocaleString()}`} />
-              <StatCard title="Total Cost" value={`₦${stats.totalCost.toLocaleString()}`} />
-              <StatCard title="Total Expenses" value={`₦${stats.totalExpenses.toLocaleString()}`} />
-              <StatCard title="Assessable Profit" value={`₦${stats.netProfit.toLocaleString()}`} />
-              <StatCard title="CIT (Company Income Tax)" value={`₦${stats.cit.toLocaleString()}`} />
-              <StatCard title="Development Levy (4%)" value={`₦${stats.developmentLevy.toLocaleString()}`} />
-              <StatCard title="Total Tax Owed" value={`₦${stats.taxOwed.toLocaleString()}`} />
-            </div>
-          </>
-        )}
-
-        {tab === "expenses" && (
-          <div className="space-y-6">
-            {/* Add Expense */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Input placeholder="Description" value={newExpense.description} onChange={e => setNewExpense({ ...newExpense, description: e.target.value })} />
-              <Input placeholder="Category" value={newExpense.category} onChange={e => setNewExpense({ ...newExpense, category: e.target.value })} />
-              <Input placeholder="Amount" type="number" value={newExpense.amount} onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })} />
-              <button onClick={handleAddExpense} disabled={savingExpense} className="sm:col-span-3 bg-black dark:bg-gray-200 dark:text-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 dark:hover:bg-gray-300 transition">
-                {savingExpense ? "Saving..." : "Add Expense"}
-              </button>
-            </div>
-
-            {/* Expenses List */}
-            <div className="hidden sm:block overflow-x-auto border border-gray-300 dark:border-neutral-700 rounded-xl">
-              <table className="w-full text-sm table-fixed border-collapse">
-                <thead className="bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300">
-                  <tr>
-                    <th className="py-2 px-3 text-left">Date</th>
-                    <th className="py-2 px-3 text-left">Description</th>
-                    <th className="py-2 px-3 text-left">Category</th>
-                    <th className="py-2 px-3 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map(exp => (
-                    <tr key={exp.id} className="border-t border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition">
-                      <td className="py-2 px-3">{new Date(exp.date).toLocaleDateString()}</td>
-                      <td className="py-2 px-3">{exp.description}</td>
-                      <td className="py-2 px-3">{exp.category || "-"}</td>
-                      <td className="py-2 px-3 text-right">₦{Number(exp.amount).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile-friendly Expenses */}
-            <div className="sm:hidden space-y-4">
-              {expenses.map(exp => (
-                <div key={exp.id} className="bg-gray-50 dark:bg-neutral-800 p-4 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{exp.description}</span>
-                    <span className="text-gray-900 dark:text-gray-100">₦{Number(exp.amount).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{exp.category || "-"}</span>
-                    <span>{new Date(exp.date).toLocaleDateString()}</span>
-                  </div>
-                </div>
+            <Skeleton className="h-10 w-1/4 rounded-lg" />
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-lg" />
               ))}
             </div>
           </div>
-        )}
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                Tax Dashboard
+              </h1>
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                Track your tax obligations and expenses
+              </p>
+            </div>
+
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">Export Report</span>
+              <span className="sm:hidden">Export</span>
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-slate-200 dark:border-neutral-700">
+            <TabButton
+              active={tab === "tax"}
+              onClick={() => setTab("tax")}
+              icon={<TrendingUp size={16} />}
+            >
+              Tax Calculation
+            </TabButton>
+            <TabButton
+              active={tab === "expenses"}
+              onClick={() => setTab("expenses")}
+              icon={<Receipt size={16} />}
+            >
+              Expenses
+            </TabButton>
+          </div>
+
+          {tab === "tax" && (
+            <div className="space-y-6">
+              {/* Period Selector */}
+              <div className="flex flex-wrap gap-2">
+                {(["month", "quarter", "year"] as const).map(p => (
+                  <PeriodButton
+                    key={p}
+                    active={period === p}
+                    onClick={() => setPeriod(p)}
+                  >
+                    {p === "month" ? "This Month" : p === "quarter" ? "This Quarter" : "This Year"}
+                  </PeriodButton>
+                ))}
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <StatCard
+                  title="Total Sales"
+                  value={`₦${stats.totalSales.toLocaleString()}`}
+                  icon={<DollarSign size={20} />}
+                  color="blue"
+                />
+                <StatCard
+                  title="Total Cost"
+                  value={`₦${stats.totalCost.toLocaleString()}`}
+                  icon={<DollarSign size={20} />}
+                  color="amber"
+                />
+                <StatCard
+                  title="Total Expenses"
+                  value={`₦${stats.totalExpenses.toLocaleString()}`}
+                  icon={<Receipt size={20} />}
+                  color="orange"
+                />
+                <StatCard
+                  title="Assessable Profit"
+                  value={`₦${stats.netProfit.toLocaleString()}`}
+                  icon={<TrendingUp size={20} />}
+                  color="green"
+                  highlight
+                />
+                <StatCard
+                  title="CIT (30%)"
+                  value={`₦${stats.cit.toLocaleString()}`}
+                  icon={<AlertCircle size={20} />}
+                  color="red"
+                />
+                <StatCard
+                  title="Development Levy (4%)"
+                  value={`₦${stats.developmentLevy.toLocaleString()}`}
+                  icon={<AlertCircle size={20} />}
+                  color="red"
+                />
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <StatCard
+                    title="Total Tax Owed"
+                    value={`₦${stats.taxOwed.toLocaleString()}`}
+                    icon={<AlertCircle size={20} />}
+                    color="red"
+                    highlight
+                  />
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6">
+                <div className="flex gap-3">
+                  <AlertCircle size={20} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                      Tax Calculation Info
+                    </h3>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      This dashboard calculates tax based on Nigerian tax regulations. CIT rate is 30% for non-small companies, plus 4% development levy. Always consult with a tax professional for accurate tax planning.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "expenses" && (
+            <div className="space-y-6">
+              {/* Add Expense Form */}
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-4 sm:p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add Expense</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                      Description
+                    </label>
+                    <input
+                      placeholder="e.g. Office supplies"
+                      value={newExpense.description}
+                      onChange={e => setNewExpense({ ...newExpense, description: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                      Category
+                    </label>
+                    <input
+                      placeholder="e.g. Operations"
+                      value={newExpense.category}
+                      onChange={e => setNewExpense({ ...newExpense, category: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                      Amount (₦)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={newExpense.amount}
+                      onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleAddExpense}
+                    disabled={savingExpense || !newExpense.description.trim() || !newExpense.amount}
+                    className="col-span-1 sm:col-span-1 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold text-sm hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition h-fit"
+                  >
+                    {savingExpense ? "Saving..." : "Add Expense"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Expenses List */}
+              {expenses.length === 0 ? (
+                <div className="text-center py-12 bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800">
+                  <Receipt size={48} className="mx-auto text-slate-300 dark:text-neutral-700 mb-3" />
+                  <p className="text-slate-600 dark:text-slate-400 font-medium">No expenses yet</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Add your first expense above</p>
+                </div>
+              ) : (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 dark:bg-neutral-800/50 border-b border-slate-200 dark:border-neutral-700">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Date</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Description</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Category</th>
+                          <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-neutral-700">
+                        {expenses.map(exp => (
+                          <tr
+                            key={exp.id}
+                            className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition"
+                          >
+                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                              {new Date(exp.date).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric"
+                              })}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                              {exp.description}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                              {exp.category || "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white text-right">
+                              ₦{Number(exp.amount).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="lg:hidden space-y-3">
+                    {expenses.map(exp => (
+                      <div
+                        key={exp.id}
+                        className="bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 p-4 hover:border-slate-300 dark:hover:border-neutral-700 transition"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                              {exp.description}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                              {new Date(exp.date).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric"
+                              })}
+                            </p>
+                          </div>
+                          <p className="font-semibold text-slate-900 dark:text-white text-sm ml-3 flex-shrink-0">
+                            ₦{Number(exp.amount).toLocaleString()}
+                          </p>
+                        </div>
+                        {exp.category && (
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            Category: {exp.category}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-1">Total Expenses</p>
+                        <p className="text-2xl sm:text-3xl font-bold text-orange-700 dark:text-orange-300">
+                          ₦{expenses.reduce((acc, e) => acc + Number(e.amount), 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <Receipt size={32} className="text-orange-500 dark:text-orange-400" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+        </div>
       </div>
     </ProtectedRoute>
   )
 }
 
-// ---------------- Components ---------------- //
+// Components
 
-function StatCard({ title, value }: { title: string, value: string }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  color,
+  highlight
+}: {
+  title: string
+  value: string
+  icon: React.ReactNode
+  color: "blue" | "amber" | "orange" | "green" | "red"
+  highlight?: boolean
+}) {
+  const colorMap = {
+    blue: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400",
+    amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400",
+    orange: "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400",
+    green: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400",
+    red: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400",
+  }
+
   return (
-    <div className="p-4 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl flex flex-col transition">
-      <span className="text-gray-500 dark:text-gray-400 text-sm">{title}</span>
-      <span className="text-gray-900 dark:text-gray-100 font-semibold text-lg">{value}</span>
+    <div className={`rounded-2xl border p-4 sm:p-6 space-y-3 ${colorMap[color]} ${highlight ? "ring-2 ring-offset-2 dark:ring-offset-0" : ""}`}>
+      <div className="flex items-center">
+        <div className="p-2 bg-white/50 dark:bg-neutral-800/50 rounded-lg">
+          {icon}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs sm:text-sm font-medium opacity-80">{title}</p>
+        <p className="text-xl sm:text-2xl font-bold mt-1">{value}</p>
+      </div>
     </div>
   )
 }
 
-function TabButton({ active, children, onClick }: { active: boolean, children: React.ReactNode, onClick: () => void }) {
+function TabButton({
+  active,
+  children,
+  icon,
+  onClick
+}: {
+  active: boolean
+  children: React.ReactNode
+  icon?: React.ReactNode
+  onClick: () => void
+}) {
   return (
     <button
-      className={`
-        px-3 py-1 rounded-t-lg font-medium text-sm transition
-        ${active
-          ? "bg-white dark:bg-neutral-900 border border-b-0 border-gray-300 dark:border-neutral-700 text-black dark:text-white shadow-sm"
-          : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"}`
-      }
       onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition ${
+        active
+          ? "text-slate-900 dark:text-white border-b-2 border-slate-900 dark:border-white"
+          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent"
+      }`}
     >
+      {icon}
       {children}
     </button>
   )
 }
 
-function PeriodButton({ active, children, onClick }: { active: boolean, children: React.ReactNode, onClick: () => void }) {
+function PeriodButton({
+  active,
+  children,
+  onClick
+}: {
+  active: boolean
+  children: React.ReactNode
+  onClick: () => void
+}) {
   return (
     <button
-      className={`px-3 py-1 rounded-lg border text-sm transition 
-        ${active
-          ? "bg-black text-white border-black hover:bg-gray-800"
-          : "bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700"}`
-      }
       onClick={onClick}
+      className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
+        active
+          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+          : "bg-white dark:bg-neutral-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-800"
+      }`}
     >
       {children}
     </button>
-  )
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="border border-gray-300 dark:border-neutral-700 p-2 rounded w-full text-gray-900 dark:text-gray-100 bg-white dark:bg-neutral-900 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-600 transition"
-    />
   )
 }

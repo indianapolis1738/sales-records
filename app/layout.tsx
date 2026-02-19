@@ -91,7 +91,7 @@ export default function RootLayout({
               {/* Navigation */}
               <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
                 {tabs.map((tab) => {
-                  const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href))
+                   const isActive = pathname === tab.href
                   return (
                     <Link
                       key={tab.name}
@@ -159,7 +159,7 @@ export default function RootLayout({
         {showNav && (
           <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-slate-200 dark:border-neutral-800 flex justify-between items-center h-20 px-2 shadow-2xl z-50">
             {tabs.map((tab) => {
-              const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href))
+              const isActive = pathname === tab.href
               return (
                 <Link
                   key={tab.name}

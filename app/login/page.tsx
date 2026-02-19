@@ -364,7 +364,7 @@ export default function AuthPage() {
         transition={{ delay: 0.5 }}
         className="absolute bottom-4 text-xs text-slate-400 dark:text-slate-600 text-center w-full px-4"
       >
-        © 2025 Sales Records. All rights reserved.
+        © 2025 Flow by Kript. All rights reserved.
       </motion.p>
     </div>
   )

@@ -321,6 +321,7 @@ export default function Sales() {
                     <tr
                       key={sale.id}
                       className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition"
+                      onClick={() => window.location.href = `/sales/${sale.id}/info`}
                     >
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                         {new Date(sale.date).toLocaleDateString("en-US", {
@@ -344,14 +345,14 @@ export default function Sales() {
                       <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
                         ₦{Number(sale.outstanding || 0).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4">
+                      {/* <td className="px-6 py-4">
                         <a
                           href={`/sales/${sale.id}`}
                           className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
                         >
                           Edit
                         </a>
-                      </td>
+                      </td> */}
                     </tr>
                   ))
                 )}
@@ -389,7 +390,7 @@ export default function Sales() {
                     <StatusBadge status={sale.status} />
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-neutral-700">
+                  <div className="flex items-center justify-between gap-3 mb-3 pb-3  border-slate-200 dark:border-neutral-700">
                     <div>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Amount</p>
                       <p className="font-semibold text-slate-900 dark:text-white text-sm">
@@ -410,13 +411,13 @@ export default function Sales() {
                     </div>
                   </div>
 
-                  <a
+                  {/* <a
                     href={`/sales/${sale.id}`}
                     onClick={(e) => e.stopPropagation()}
                     className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
                   >
                     Edit Sale →
-                  </a>
+                  </a> */}
                 </div>
               ))
             )}

@@ -7,11 +7,11 @@ import ProtectedRoute from "@/components/ProtectedRoute"
 import StatusBadge from "@/components/StatusBadge"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
+import { ArrowLeft, Download, Edit2, Trash2, CheckCircle, AlertCircle, Plus, X } from "lucide-react"
 
 export default function SaleInfo() {
   const { id } = useParams()
   const router = useRouter()
-
 
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -25,13 +25,13 @@ export default function SaleInfo() {
   const [invoice, setInvoice] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   const receiptRef = useRef<HTMLDivElement>(null)
 
-
-
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
       // Fetch invoice
       const { data: invoiceData } = await supabase
         .from("sales")
@@ -60,6 +60,7 @@ export default function SaleInfo() {
 
         if (profileData) setProfile(profileData)
       }
+      setLoading(false)
     }
 
     fetchData()
@@ -72,7 +73,27 @@ export default function SaleInfo() {
     }
   }, [showEditModal])
 
-  if (!invoice || !profile) return null
+  if (loading || !invoice || !profile) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="animate-pulse space-y-6">
+              <div className="h-10 bg-slate-300 dark:bg-neutral-700 rounded-lg w-24"></div>
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 space-y-4">
+                <div className="h-8 bg-slate-300 dark:bg-neutral-700 rounded w-1/3"></div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-20 bg-slate-300 dark:bg-neutral-700 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
 
   const markAsPaid = async () => {
     await supabase
@@ -86,18 +107,15 @@ export default function SaleInfo() {
     setInvoice({ ...invoice, status: "Paid", outstanding: 0 })
   }
 
-
   const updateInvoice = async () => {
     try {
       setIsUpdating(true)
 
-      // Calculate new total
       const newTotal = editItems.reduce(
         (sum, item) => sum + item.quantity * Number(item.sales_price),
         0
       )
 
-      // 1️⃣ Update invoice date & total
       const { error: invoiceError } = await supabase
         .from("sales")
         .update({
@@ -108,7 +126,6 @@ export default function SaleInfo() {
 
       if (invoiceError) throw invoiceError
 
-      // 2️⃣ Delete old items
       const { error: deleteError } = await supabase
         .from("invoice_items")
         .delete()
@@ -116,13 +133,13 @@ export default function SaleInfo() {
 
       if (deleteError) throw deleteError
 
-      // 3️⃣ Insert updated items
       const formattedItems = editItems.map(item => ({
         sale_id: invoice.id,
         product: item.product,
         quantity: item.quantity,
         sales_price: item.sales_price,
-        serial_number: item.serial_number
+        serial_number: item.serial_number,
+        cost_price: item.cost_price
       }))
 
       const { error: insertError } = await supabase
@@ -131,10 +148,8 @@ export default function SaleInfo() {
 
       if (insertError) throw insertError
 
-      // Refresh
       router.refresh()
       setShowEditModal(false)
-
     } catch (error: any) {
       console.error("Update error:", error.message)
       alert(error.message)
@@ -143,15 +158,12 @@ export default function SaleInfo() {
     }
   }
 
-
-
   const deleteInvoice = async () => {
     if (!invoice) return
 
     try {
       setIsDeleting(true)
 
-      // 1️⃣ Delete invoice items first (important if no ON DELETE CASCADE)
       const { error: itemsError } = await supabase
         .from("invoice_items")
         .delete()
@@ -159,7 +171,6 @@ export default function SaleInfo() {
 
       if (itemsError) throw itemsError
 
-      // 2️⃣ Delete invoice
       const { error: invoiceError } = await supabase
         .from("sales")
         .delete()
@@ -167,7 +178,6 @@ export default function SaleInfo() {
 
       if (invoiceError) throw invoiceError
 
-      // 3️⃣ Redirect
       router.push("/sales")
     } catch (error: any) {
       console.error("Delete error:", error.message)
@@ -193,7 +203,6 @@ export default function SaleInfo() {
     pdf.save(
       `${isReceipt ? "receipt" : "invoice"}-${invoice.invoice_number}.pdf`
     )
-
   }
 
   const handleItemChange = (index: number, field: string, value: any) => {
@@ -210,6 +219,7 @@ export default function SaleInfo() {
         product: "",
         quantity: 1,
         sales_price: 0,
+        cost_price: 0,
         serial_number: ""
       }
     ])
@@ -223,110 +233,237 @@ export default function SaleInfo() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-3xl mx-auto md:p-6 sm:p-2 rounded-2xl shadow-sm space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="max-w-4xl mx-auto space-y-6">
 
-        <div className="bg-white dark:bg-gray-800 p-6 sm:p-2 rounded-2xl shadow-sm space-y-6">
-          <button
-            onClick={() => router.back()}
-            className="text-sm underline ml-auto"
-          >
-            Back
-          </button>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            {isReceipt ? "Receipt" : "Invoice"} Information
-          </h2>
-
-          {/* Invoice Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <InfoRow label="Invoice No" value={invoice.invoice_number} />
-            <InfoRow label="Date" value={invoice.date} />
-            <InfoRow label="Customer" value={invoice.customer_name} />
-            <InfoRow label="Items" value={items.length} />
-            <InfoRow
-              label="Total Amount"
-              value={`₦${Number(invoice.total_amount).toLocaleString()}`}
-            />
-            <InfoRow
-              label="Total Profit"
-              value={`₦${Number(invoice.total_profit).toLocaleString()}`}
-            />
-            <InfoRow
-              label="Status"
-              value={<StatusBadge status={invoice.status} />}
-            />
-            <InfoRow
-              label="Outstanding"
-              value={`₦${Number(invoice.outstanding).toLocaleString()}`}
-            />
-            <InfoRow
-              label="Created At"
-              value={new Date(invoice.created_at).toLocaleString()}
-            />
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold text-sm transition"
+            >
+              <ArrowLeft size={18} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              {isReceipt ? "Receipt" : "Invoice"}
+            </h1>
+            <div className="w-16"></div>
           </div>
 
-          {/* List of Items Sold */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Items Sold
-            </h3>
-            <div className="mt-4 space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex justify-between items-center border-b pb-2"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {item.product}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {item.quantity} pcs @ ₦
-                      {Number(item.sales_price).toLocaleString()} each
-                    </p>
-                  </div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    ₦
-                    {(
-                      item.quantity * Number(item.sales_price)
-                    ).toLocaleString()}
+          {/* Main Card */}
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-neutral-800 dark:to-neutral-900 px-6 sm:px-8 py-6 sm:py-8 border-b border-slate-200 dark:border-neutral-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1">
+                    {isReceipt ? "Receipt" : "Invoice"} Number
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                    {invoice.invoice_number}
                   </p>
                 </div>
-              ))}
+                <StatusBadge status={invoice.status} />
+              </div>
             </div>
+
+            {/* Content */}
+            <div className="p-6 sm:p-8 space-y-8">
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <InfoCard
+                  label="Customer"
+                  value={invoice.customer_name}
+                  icon="👤"
+                />
+                <InfoCard
+                  label="Invoice Date"
+                  value={new Date(invoice.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric"
+                  })}
+                  icon="📅"
+                />
+                <InfoCard
+                  label="Items"
+                  value={items.length.toString()}
+                  icon="📦"
+                />
+                <InfoCard
+                  label="Total Amount"
+                  value={`₦${Number(invoice.total_amount).toLocaleString()}`}
+                  highlight
+                  icon="💰"
+                />
+                <InfoCard
+                  label="Total Profit"
+                  value={`₦${Number(invoice.total_profit).toLocaleString()}`}
+                  highlight
+                  icon="📈"
+                />
+                {!isReceipt && (
+                  <InfoCard
+                    label="Outstanding"
+                    value={`₦${Number(invoice.outstanding).toLocaleString()}`}
+                    icon="⏳"
+                  />
+                )}
+              </div>
+
+              {/* Items Table */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  Items Sold
+                </h3>
+                <div className="space-y-3">
+                  {items.length === 0 ? (
+                    <p className="text-sm text-slate-600 dark:text-slate-400">No items</p>
+                  ) : (
+                    <>
+                      {/* Desktop Table */}
+                      <div className="hidden sm:block bg-slate-50 dark:bg-neutral-800/50 rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800">
+                              <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Product</th>
+                              <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Serial Number</th>
+                              <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-300">Qty</th>
+                              <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-300">Price</th>
+                              <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-300">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200 dark:divide-neutral-700">
+                            {items.map((item) => (
+                              <tr key={item.id} className="hover:bg-slate-100 dark:hover:bg-neutral-700/50 transition">
+                                <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
+                                  {item.product}
+                                </td>
+                                <td className="px-4 py-3 text-slate-600 dark:text-slate-400 font-mono text-xs">
+                                  {item.serial_number ? (
+                                    <span className="bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded inline-block">
+                                      {item.serial_number}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 dark:text-slate-500 italic">—</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">
+                                  {item.quantity}
+                                </td>
+                                <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
+                                  ₦{Number(item.sales_price).toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
+                                  ₦{(item.quantity * Number(item.sales_price)).toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Cards */}
+                      <div className="sm:hidden space-y-3">
+                        {items.map((item) => (
+                          <div key={item.id} className="bg-slate-50 dark:bg-neutral-800/50 rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900 dark:text-white">{item.product}</p>
+                                {item.serial_number && (
+                                  <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block">
+                                    S/N: {item.serial_number}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="font-semibold text-slate-900 dark:text-white ml-2 flex-shrink-0">
+                                ₦{(item.quantity * Number(item.sales_price)).toLocaleString()}
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {item.quantity} × ₦{Number(item.sales_price).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 sm:p-6 border border-blue-200 dark:border-blue-800">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-blue-700 dark:text-blue-300">Total Amount</span>
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">₦{Number(invoice.total_amount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-blue-700 dark:text-blue-300">Total Profit</span>
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">₦{Number(invoice.total_profit).toLocaleString()}</span>
+                  </div>
+                  {!isReceipt && (
+                    <div className="border-t border-blue-200 dark:border-blue-800 pt-2 mt-2 flex justify-between text-sm">
+                      <span className="text-blue-700 dark:text-blue-300">Outstanding</span>
+                      <span className="font-semibold text-blue-900 dark:text-blue-100">₦{Number(invoice.outstanding).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                <p>Created: {new Date(invoice.created_at).toLocaleString()}</p>
+              </div>
+
+            </div>
+
+            {/* Footer Actions */}
+            <div className="px-6 sm:px-8 py-6 sm:py-8 bg-slate-50 dark:bg-neutral-800/50 border-t border-slate-200 dark:border-neutral-800">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {invoice.status !== "Paid" && (
+                  <button
+                    onClick={markAsPaid}
+                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition active:scale-95"
+                  >
+                    <CheckCircle size={18} />
+                    <span className="hidden sm:inline">Mark as Paid</span>
+                    <span className="sm:hidden">Paid</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition active:scale-95"
+                >
+                  <Edit2 size={18} />
+                  <span>Edit</span>
+                </button>
+
+                <button
+                  onClick={downloadPDF}
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold text-sm transition active:scale-95"
+                >
+                  <Download size={18} />
+                  <span className="hidden sm:inline">Download</span>
+                  <span className="sm:hidden">PDF</span>
+                </button>
+
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition active:scale-95 ml-auto sm:ml-0"
+                >
+                  <Trash2 size={18} />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              </div>
+            </div>
+
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="border px-4 py-2 rounded-lg text-sm"
-            >
-              Edit
-            </button>
-
-            {invoice.status !== "Paid" && (
-              <button
-                onClick={markAsPaid}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
-              >
-                Mark as Paid
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              Delete
-            </button>
-
-            <button
-              onClick={downloadPDF}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              Download Invoice
-            </button>
-          </div>
         </div>
 
         {/* Hidden PDF Invoice */}
@@ -336,242 +473,533 @@ export default function SaleInfo() {
             position: "absolute",
             left: "-9999px",
             width: 650,
-            padding: 30,
-            backgroundColor: "#fff",
-            fontFamily: "Helvetica, Arial, sans-serif",
-            color: "#111",
-            fontSize: 12,
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            padding: 40,
+            backgroundColor: "#ffffff",
+            fontFamily: "'Segoe UI', 'Helvetica Neue', sans-serif",
+            color: "#1e293b",
+            fontSize: 13,
           }}
         >
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <img src="/logo.jpg" style={{ height: 60, marginBottom: 10 }} />
-            <h1 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: 5 }}>
-              {profile.business_name}
-            </h1>
-            <p style={{ margin: "2px 0" }}>{profile.business_address}</p>
-            <p style={{ margin: "2px 0" }}>{profile.phone_number}</p>
-            <hr style={{ margin: "15px 0", borderColor: "#ddd" }} />
+          {/* Header */}
+          <div style={{ marginBottom: 40, borderBottom: "3px solid #0f172a", paddingBottom: 30 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div>
+                <h1 style={{ fontSize: "32px", fontWeight: "700", margin: "0 0 5px 0", color: "#0f172a" }}>
+                  {profile.business_name}
+                </h1>
+                <p style={{ margin: "0", fontSize: "12px", color: "#64748b", fontWeight: "500" }}>
+                  Sales {isReceipt ? "Receipt" : "Invoice"}
+                </p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "600", color: "#0f172a" }}>
+                  {isReceipt ? "RECEIPT" : "INVOICE"}
+                </p>
+                <p style={{ margin: "0", fontSize: "18px", fontWeight: "700", color: "#1e40af" }}>
+                  {invoice.invoice_number}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 40 }}>
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
+                  Business Address
+                </p>
+                <p style={{ margin: "0", fontSize: "13px", color: "#334155", fontWeight: "500" }}>
+                  {profile.business_address}
+                </p>
+              </div>
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
+                  Contact
+                </p>
+                <p style={{ margin: "0", fontSize: "13px", color: "#334155", fontWeight: "500" }}>
+                  {profile.phone_number}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <table style={{ width: "100%", marginBottom: 15, fontSize: "12px" }}>
-            <tbody>
-              <tr>
-                <td style={{ fontWeight: "bold" }}>Customer</td>
-                <td style={{ textAlign: "right" }}>{invoice.customer_name}</td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: "bold" }}>Invoice No</td>
-                <td style={{ textAlign: "right" }}>{invoice.invoice_number}</td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: "bold" }}>Status</td>
-                <td style={{ textAlign: "right" }}>{invoice.status}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Invoice Info */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40, gap: 20 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
+                Bill To
+              </p>
+              <p style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>
+                {invoice.customer_name}
+              </p>
+              <div style={{ 
+                backgroundColor: "#f1f5f9", 
+                padding: "12px", 
+                borderRadius: "6px",
+                marginTop: 8,
+                border: "1px solid #e2e8f0"
+              }}>
+                <p style={{ margin: "0", fontSize: "12px", color: "#475569" }}>
+                  Customer Order
+                </p>
+              </div>
+            </div>
 
-          {/* Items */}
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "12px",
-            }}
-          >
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <p style={{ margin: "0 0 4px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
+                    Invoice Date
+                  </p>
+                  <p style={{ margin: "0", fontSize: "14px", fontWeight: "600", color: "#0f172a" }}>
+                    {new Date(invoice.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric"
+                    })}
+                  </p>
+                </div>
+
+                <div>
+                  <p style={{ margin: "0 0 4px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
+                    Status
+                  </p>
+                  <div style={{
+                    display: "inline-block",
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    backgroundColor: invoice.status === "Paid" ? "#dcfce7" : "#fef3c7",
+                    color: invoice.status === "Paid" ? "#166534" : "#b45309",
+                    fontSize: "12px",
+                    fontWeight: "600"
+                  }}>
+                    {invoice.status}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table in PDF */}
+          <table style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            marginBottom: 30,
+            backgroundColor: "#f8fafc",
+            borderRadius: "8px",
+            overflow: "hidden"
+          }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", backgroundColor: "#f9f9f9" }}>
-                <th align="left" style={{ padding: "8px", fontWeight: "bold" }}>Item</th>
-                <th align="center" style={{ padding: "8px", fontWeight: "bold" }}>S/N</th>
-                <th align="center" style={{ padding: "8px", fontWeight: "bold" }}>Qty</th>
-                <th align="right" style={{ padding: "8px", fontWeight: "bold" }}>Price</th>
+              <tr style={{
+                backgroundColor: "#0f172a",
+                color: "#ffffff"
+              }}>
+                <th style={{
+                  padding: "14px 16px",
+                  textAlign: "left",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  borderRight: "1px solid #1e293b",
+                  width: "40%"
+                }}>
+                  Description
+                </th>
+                <th style={{
+                  padding: "14px 16px",
+                  textAlign: "left",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  borderRight: "1px solid #1e293b",
+                  width: "25%"
+                }}>
+                  Serial Number
+                </th>
+                <th style={{
+                  padding: "14px 16px",
+                  textAlign: "center",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  borderRight: "1px solid #1e293b",
+                  width: "12%"
+                }}>
+                  Qty
+                </th>
+                <th style={{
+                  padding: "14px 16px",
+                  textAlign: "right",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  width: "23%"
+                }}>
+                  Amount
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {items.map(item => (
-                <tr key={item.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "8px" }}>{item.product}</td>
-                  <td align="center" style={{ padding: "8px" }}>{item.serial_number || "-"}</td>
-                  <td align="center" style={{ padding: "8px" }}>{item.quantity}</td>
-                  <td align="right" style={{ padding: "8px" }}>
-                    ₦{Number(item.sales_price).toLocaleString()}
+              {items.map((item, index) => (
+                <tr key={item.id} style={{
+                  borderBottom: index !== items.length - 1 ? "1px solid #e2e8f0" : "none",
+                  backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8fafc"
+                }}>
+                  <td style={{
+                    padding: "14px 16px",
+                    color: "#0f172a",
+                    fontWeight: "600",
+                    borderRight: "1px solid #e2e8f0"
+                  }}>
+                    <div>
+                      <p style={{ margin: "0" }}>{item.product}</p>
+                    </div>
+                  </td>
+                  <td style={{
+                    padding: "14px 16px",
+                    color: "#475569",
+                    fontFamily: "monospace",
+                    fontSize: "10px",
+                    borderRight: "1px solid #e2e8f0",
+                    fontWeight: "500"
+                  }}>
+                    {item.serial_number ? (
+                      <div style={{
+                        backgroundColor: "#e2e8f0",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        display: "inline-block"
+                      }}>
+                        {item.serial_number}
+                      </div>
+                    ) : (
+                      <span style={{ color: "#cbd5e1" }}>—</span>
+                    )}
+                  </td>
+                  <td style={{
+                    padding: "14px 16px",
+                    textAlign: "center",
+                    color: "#475569",
+                    borderRight: "1px solid #e2e8f0"
+                  }}>
+                    {item.quantity}
+                  </td>
+                  <td style={{
+                    padding: "14px 16px",
+                    textAlign: "right",
+                    color: "#0f172a",
+                    fontWeight: "700"
+                  }}>
+                    ₦{(item.quantity * Number(item.sales_price)).toLocaleString()}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <table style={{ width: "100%", marginTop: 15, fontSize: "12px" }}>
-            <tbody>
-              <tr>
-                <td style={{ fontWeight: "bold" }}>Total Price</td>
-                <td align="right">
+          {/* Summary Section */}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 40 }}>
+            <div style={{ width: "320px" }}>
+              {/* Subtotal */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                paddingBottom: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                marginBottom: 10
+              }}>
+                <span style={{ color: "#64748b", fontSize: "12px" }}>Subtotal</span>
+                <span style={{ color: "#0f172a", fontWeight: "600", fontSize: "12px" }}>
                   ₦{Number(invoice.total_amount).toLocaleString()}
-                </td>
-              </tr>
+                </span>
+              </div>
+
+              {/* Total Profit */}
+              {/* <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                paddingBottom: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                marginBottom: 10
+              }}>
+                <span style={{ color: "#64748b", fontSize: "12px" }}>Profit</span>
+                <span style={{ color: "#0f172a", fontWeight: "600", fontSize: "12px" }}>
+                  ₦{Number(invoice.total_profit).toLocaleString()}
+                </span>
+              </div> */}
+
+              {/* Outstanding (if not receipt) */}
               {!isReceipt && (
-                <tr>
-                  <td style={{ fontWeight: "bold" }}>Outstanding</td>
-                  <td align="right">
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  paddingBottom: "10px",
+                  borderBottom: "1px solid #e2e8f0",
+                  marginBottom: 10
+                }}>
+                  <span style={{ color: "#64748b", fontSize: "12px" }}>Outstanding</span>
+                  <span style={{ color: "#dc2626", fontWeight: "700", fontSize: "12px" }}>
                     ₦{Number(invoice.outstanding).toLocaleString()}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          <hr style={{ margin: "15px 0", borderColor: "#ddd" }} />
-          <p style={{ textAlign: "center", fontSize: "12px", marginTop: 10 }}>
-            Thank you for your business
-          </p>
-        </div>
-
-      </div>
-
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[90%] max-w-md space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Delete Invoice
-            </h3>
-
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              This action cannot be undone. Are you sure you want to permanently delete this invoice?
-            </p>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={isDeleting}
-                className="border px-4 py-2 rounded-lg text-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={deleteInvoice}
-                disabled={isDeleting}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto p-4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-3xl space-y-6">
-
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Edit Invoice
-            </h3>
-
-            {/* Date */}
-            <div>
-              <label className="text-sm text-gray-500">Invoice Date</label>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-              />
-            </div>
-
-            {/* Items */}
-            <div className="space-y-4">
-              {editItems.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-5 gap-3 items-end border p-3 rounded-lg">
-
-                  <input
-                    placeholder="Product"
-                    value={item.product}
-                    onChange={(e) =>
-                      handleItemChange(index, "product", e.target.value)
-                    }
-                    className="border rounded px-2 py-1 text-sm"
-                  />
-
-                  <input
-                    type="number"
-                    placeholder="Qty"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(index, "quantity", Number(e.target.value))
-                    }
-                    className="border rounded px-2 py-1 text-sm"
-                  />
-
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={item.sales_price}
-                    onChange={(e) =>
-                      handleItemChange(index, "sales_price", Number(e.target.value))
-                    }
-                    className="border rounded px-2 py-1 text-sm"
-                  />
-
-                  <input
-                    placeholder="Serial"
-                    value={item.serial_number || ""}
-                    onChange={(e) =>
-                      handleItemChange(index, "serial_number", e.target.value)
-                    }
-                    className="border rounded px-2 py-1 text-sm"
-                  />
-
-                  <button
-                    onClick={() => removeItem(index)}
-                    className="bg-red-500 text-white px-2 py-1 rounded text-xs"
-                  >
-                    Remove
-                  </button>
+                  </span>
                 </div>
-              ))}
+              )}
+
+              {/* Total Amount - Highlighted */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                backgroundColor: "#1e40af",
+                color: "#ffffff",
+                padding: "16px",
+                borderRadius: "8px",
+                marginTop: 15
+              }}>
+                <span style={{ fontSize: "13px", fontWeight: "600" }}>
+                  {isReceipt ? "Total Paid" : "Total Due"}
+                </span>
+                <span style={{ fontSize: "18px", fontWeight: "700" }}>
+                  ₦{Number(invoice.total_amount).toLocaleString()}
+                </span>
+              </div>
             </div>
+          </div>
 
-            <button
-              onClick={addNewItem}
-              className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded text-sm"
-            >
-              + Add Item
-            </button>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                onClick={() => setShowEditModal(false)}
-                disabled={isUpdating}
-                className="border px-4 py-2 rounded-lg text-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={updateInvoice}
-                disabled={isUpdating}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
-              >
-                {isUpdating ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-
+          {/* Footer */}
+          <div style={{
+            borderTop: "2px solid #e2e8f0",
+            paddingTop: 24,
+            textAlign: "center",
+            color: "#64748b",
+            fontSize: "11px"
+          }}>
+            <p style={{ margin: "0 0 8px 0", fontWeight: "600", color: "#0f172a" }}>
+              Thank you for your business!
+            </p>
+            <p style={{ margin: "0 0 4px 0" }}>
+              This {isReceipt ? "receipt" : "invoice"} was generated on {new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+              })}
+            </p>
+            <p style={{ margin: "0", color: "#94a3b8" }}>
+              For inquiries or support, please contact us at {profile.phone_number}
+            </p>
           </div>
         </div>
-      )}
+
+        {/* Delete Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center sm:justify-center z-50 p-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-md space-y-4 p-6 animate-in slide-in-from-bottom-5 sm:zoom-in-95">
+              
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertCircle size={24} className="text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    Delete Invoice
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    This action cannot be undone. Are you sure you want to permanently delete this invoice?
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteInvoice}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition disabled:opacity-50 active:scale-95"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center sm:justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-2xl space-y-6 p-6 my-8 sm:my-0 animate-in slide-in-from-bottom-5 sm:zoom-in-95">
+
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
+                  Edit Invoice
+                </h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition"
+                >
+                  <X size={20} className="text-slate-600 dark:text-slate-400" />
+                </button>
+              </div>
+
+              {/* Date Input */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                  Invoice Date
+                </label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                />
+              </div>
+
+              {/* Items */}
+              <div className="space-y-4">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                  Items
+                </label>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {editItems.map((item, index) => (
+                    <div key={item.id} className="bg-slate-50 dark:bg-neutral-800/50 border border-slate-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Product</label>
+                          <input
+                            placeholder="Product name"
+                            value={item.product}
+                            onChange={(e) =>
+                              handleItemChange(index, "product", e.target.value)
+                            }
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleItemChange(index, "quantity", Number(e.target.value))
+                            }
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Price</label>
+                          <input
+                            type="number"
+                            placeholder="0.00"
+                            value={item.sales_price}
+                            onChange={(e) =>
+                              handleItemChange(index, "sales_price", Number(e.target.value))
+                            }
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Serial (Optional)</label>
+                          <input
+                            placeholder="Serial number"
+                            value={item.serial_number || ""}
+                            onChange={(e) =>
+                              handleItemChange(index, "serial_number", e.target.value)
+                            }
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => removeItem(index)}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                      >
+                        <Trash2 size={16} />
+                        Remove Item
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={addNewItem}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-dashed border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
+                >
+                  <Plus size={18} />
+                  Add Item
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  disabled={isUpdating}
+                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateInvoice}
+                  disabled={isUpdating}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition disabled:opacity-50 active:scale-95"
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
     </ProtectedRoute>
   )
 }
 
-function InfoRow({ label, value }: { label: string; value: any }) {
+// Components
+
+function InfoCard({
+  label,
+  value,
+  highlight,
+  icon
+}: {
+  label: string
+  value: any
+  highlight?: boolean
+  icon?: string
+}) {
   return (
-    <div className="flex justify-between border-b pb-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium">{value}</span>
+    <div className={`rounded-lg p-4 border transition ${highlight
+      ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+      : "bg-slate-50 dark:bg-neutral-800/50 border-slate-200 dark:border-neutral-700"
+      }`}>
+      <p className={`text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-2 ${highlight
+        ? "text-blue-700 dark:text-blue-400"
+        : "text-slate-600 dark:text-slate-400"
+        }`}>
+        <span>{icon}</span>
+        {label}
+      </p>
+      <p className={`text-lg sm:text-xl font-bold ${highlight
+        ? "text-blue-900 dark:text-blue-100"
+        : "text-slate-900 dark:text-white"
+        }`}>
+        {value}
+      </p>
     </div>
   )
 }

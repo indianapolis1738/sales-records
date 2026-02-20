@@ -111,21 +111,43 @@ export default function SaleInfo() {
     try {
       setIsUpdating(true)
 
+      // Validate items
+      if (editItems.length === 0) {
+        alert("Invoice must have at least one item")
+        return
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        alert("You must be logged in")
+        return
+      }
+
       const newTotal = editItems.reduce(
         (sum, item) => sum + item.quantity * Number(item.sales_price),
         0
       )
 
+      const newProfit = editItems.reduce(
+        (sum, item) => sum + (item.quantity * (Number(item.sales_price) - Number(item.cost_price))),
+        0
+      )
+
+      // Update invoice header
       const { error: invoiceError } = await supabase
         .from("sales")
         .update({
           date: editDate,
-          total_amount: newTotal
+          total_amount: newTotal,
+          total_profit: newProfit
         })
         .eq("id", invoice.id)
+        .eq("user_id", user.id)
 
       if (invoiceError) throw invoiceError
 
+      // Delete old items
       const { error: deleteError } = await supabase
         .from("invoice_items")
         .delete()
@@ -133,13 +155,15 @@ export default function SaleInfo() {
 
       if (deleteError) throw deleteError
 
+      // Insert updated items with user_id
       const formattedItems = editItems.map(item => ({
         sale_id: invoice.id,
+        user_id: user.id,
         product: item.product,
         quantity: item.quantity,
-        sales_price: item.sales_price,
-        serial_number: item.serial_number,
-        cost_price: item.cost_price
+        sales_price: Number(item.sales_price),
+        serial_number: item.serial_number || "",
+        cost_price: Number(item.cost_price)
       }))
 
       const { error: insertError } = await supabase
@@ -148,11 +172,13 @@ export default function SaleInfo() {
 
       if (insertError) throw insertError
 
+      // Refresh the page
       router.refresh()
       setShowEditModal(false)
+      alert("Invoice updated successfully")
     } catch (error: any) {
       console.error("Update error:", error.message)
-      alert(error.message)
+      alert("Error updating invoice: " + error.message)
     } finally {
       setIsUpdating(false)
     }
@@ -717,20 +743,6 @@ export default function SaleInfo() {
                 </span>
               </div>
 
-              {/* Total Profit */}
-              {/* <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                paddingBottom: "10px",
-                borderBottom: "1px solid #e2e8f0",
-                marginBottom: 10
-              }}>
-                <span style={{ color: "#64748b", fontSize: "12px" }}>Profit</span>
-                <span style={{ color: "#0f172a", fontWeight: "600", fontSize: "12px" }}>
-                  ₦{Number(invoice.total_profit).toLocaleString()}
-                </span>
-              </div> */}
-
               {/* Outstanding (if not receipt) */}
               {!isReceipt && (
                 <div style={{
@@ -834,10 +846,11 @@ export default function SaleInfo() {
 
         {/* Edit Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center sm:justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-2xl space-y-6 p-6 my-8 sm:my-0 animate-in slide-in-from-bottom-5 sm:zoom-in-95">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95">
 
-              <div className="flex items-center justify-between">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-neutral-800 flex-shrink-0">
                 <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
                   Edit Invoice
                 </h3>
@@ -849,106 +862,173 @@ export default function SaleInfo() {
                 </button>
               </div>
 
-              {/* Date Input */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
-                  Invoice Date
-                </label>
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={(e) => setEditDate(e.target.value)}
-                  className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
-                />
-              </div>
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                
+                {/* Date Input */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                    Invoice Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                  />
+                </div>
 
-              {/* Items */}
-              <div className="space-y-4">
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
-                  Items
-                </label>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {editItems.map((item, index) => (
-                    <div key={item.id} className="bg-slate-50 dark:bg-neutral-800/50 border border-slate-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Items Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                      Invoice Items ({editItems.length})
+                    </label>
+                  </div>
+
+                  <div className="space-y-3">
+                    {editItems.map((item, index) => (
+                      <div key={item.id} className="bg-slate-50 dark:bg-neutral-800/50 border border-slate-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
+                        
+                        {/* Item Number */}
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Item {index + 1}</p>
+                          <button
+                            onClick={() => removeItem(index)}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition"
+                          >
+                            <Trash2 size={14} />
+                            Remove
+                          </button>
+                        </div>
+
+                        {/* Product Name */}
                         <div>
-                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Product</label>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1.5">
+                            Product Name *
+                          </label>
                           <input
-                            placeholder="Product name"
+                            placeholder="Enter product name"
                             value={item.product}
                             onChange={(e) =>
                               handleItemChange(index, "product", e.target.value)
                             }
-                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
                           />
                         </div>
 
+                        {/* Serial Number */}
                         <div>
-                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Quantity</label>
+                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1.5">
+                            Serial/IMEI (Optional)
+                          </label>
                           <input
-                            type="number"
-                            min="1"
-                            placeholder="1"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleItemChange(index, "quantity", Number(e.target.value))
-                            }
-                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Price</label>
-                          <input
-                            type="number"
-                            placeholder="0.00"
-                            value={item.sales_price}
-                            onChange={(e) =>
-                              handleItemChange(index, "sales_price", Number(e.target.value))
-                            }
-                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Serial (Optional)</label>
-                          <input
-                            placeholder="Serial number"
+                            placeholder="Enter serial number or IMEI"
                             value={item.serial_number || ""}
                             onChange={(e) =>
                               handleItemChange(index, "serial_number", e.target.value)
                             }
-                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                            className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
                           />
                         </div>
-                      </div>
 
-                      <button
-                        onClick={() => removeItem(index)}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
-                      >
-                        <Trash2 size={16} />
-                        Remove Item
-                      </button>
-                    </div>
-                  ))}
+                        {/* Quantity, Cost Price, Sales Price */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1.5">
+                              Quantity *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="1"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleItemChange(index, "quantity", Number(e.target.value) || 1)
+                              }
+                              className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1.5">
+                              Cost Price *
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={item.cost_price}
+                              onChange={(e) =>
+                                handleItemChange(index, "cost_price", Number(e.target.value) || 0)
+                              }
+                              className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1.5">
+                              Sales Price *
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={item.sales_price}
+                              onChange={(e) =>
+                                handleItemChange(index, "sales_price", Number(e.target.value) || 0)
+                              }
+                              className="w-full border border-slate-300 dark:border-neutral-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Item Total */}
+                        <div className="bg-white dark:bg-neutral-900/50 rounded-lg p-2.5 border border-slate-200 dark:border-neutral-700">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Item Total</p>
+                          <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                            ₦{(item.quantity * Number(item.sales_price)).toLocaleString()}
+                          </p>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Item Button */}
+                  <button
+                    onClick={addNewItem}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
+                  >
+                    <Plus size={18} />
+                    Add Another Item
+                  </button>
                 </div>
 
-                <button
-                  onClick={addNewItem}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-dashed border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition"
-                >
-                  <Plus size={18} />
-                  Add Item
-                </button>
+                {/* Summary */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-blue-700 dark:text-blue-300">Subtotal</span>
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">
+                      ₦{editItems.reduce((sum, item) => sum + (item.quantity * Number(item.sales_price)), 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-blue-700 dark:text-blue-300">Total Profit</span>
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">
+                      ₦{editItems.reduce((sum, item) => sum + (item.quantity * (Number(item.sales_price) - Number(item.cost_price))), 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
+              {/* Footer Actions */}
+              <div className="flex gap-3 p-6 border-t border-slate-200 dark:border-neutral-800 flex-shrink-0 bg-slate-50 dark:bg-neutral-800/50">
                 <button
                   onClick={() => setShowEditModal(false)}
                   disabled={isUpdating}
-                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-white dark:hover:bg-neutral-900 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>

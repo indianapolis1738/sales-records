@@ -807,35 +807,35 @@ export default function SaleInfo() {
 
         {/* Delete Modal */}
         {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center sm:justify-center z-50 p-4">
-            <div className="bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-md space-y-4 p-6 animate-in slide-in-from-bottom-5 sm:zoom-in-95">
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-md p-5 sm:p-6 md:p-8 space-y-5 sm:space-y-6 shadow-2xl animate-in slide-in-from-bottom-5 sm:zoom-in-95">
               
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle size={24} className="text-red-600 dark:text-red-400" />
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center shrink-0 mx-auto">
+                  <AlertCircle size={20} className="sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
                     Delete Invoice
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
                     This action cannot be undone. Are you sure you want to permanently delete this invoice?
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-800">
+              <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-slate-200 dark:border-neutral-800">
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition disabled:opacity-50"
+                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-neutral-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={deleteInvoice}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition disabled:opacity-50 active:scale-95"
+                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg font-semibold text-xs sm:text-sm transition disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>

@@ -1,430 +1,465 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import ProtectedRoute from "@/components/ProtectedRoute"
-import StatusBadge from "@/components/StatusBadge"
-import { Plus, Edit, Save, TrendingUp, DollarSign, AlertCircle, CheckCircle, Calendar, ChevronRight } from "lucide-react"
-import Skeleton from "@/components/Skeleton"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { BarChart3, TrendingUp, Users, Zap, Check, ArrowRight, Menu, X, DollarSign, PieChart, Calendar, Shield, Smartphone, Headphones } from "lucide-react"
+import Link from "next/link"
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    totalProfit: 0,
-    outstanding: 0,
-    unpaidCount: 0
-  })
-  const [goal, setGoal] = useState<number | null>(null)
-  const [goalProgress, setGoalProgress] = useState(0)
-  const [editingGoal, setEditingGoal] = useState(false)
-  const [goalInput, setGoalInput] = useState("")
-  const [goalReached, setGoalReached] = useState(false)
+export default function LandingPage() {
+    const router = useRouter()
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const [recentSales, setRecentSales] = useState<any[]>([])
-  const [profile, setProfile] = useState<{
-    full_name: string; business_name?: string; phone_number?: string;
-  }>({
-    full_name: "",
-    business_name: undefined,
-    phone_number: undefined
-  })
-  const [loading, setLoading] = useState(true)
-  const [savingGoal, setSavingGoal] = useState(false)
+    const features = [
+        {
+            icon: <BarChart3 size={28} />,
+            title: "Sales Tracking",
+            description: "Track every sale in real-time with detailed invoice records and payment status"
+        },
+        {
+            icon: <Users size={28} />,
+            title: "Customer Management",
+            description: "Organize and manage your customer relationships effectively in one place"
+        },
+        {
+            icon: <PieChart size={28} />,
+            title: "Inventory Control",
+            description: "Keep accurate stock records and never run out of essential products"
+        },
+        {
+            icon: <TrendingUp size={28} />,
+            title: "Profit Analytics",
+            description: "Understand your profit margins and business performance with real insights"
+        },
+        {
+            icon: <Calendar size={28} />,
+            title: "Invoice Management",
+            description: "Create professional invoices and track payment status effortlessly"
+        },
+        {
+            icon: <Shield size={28} />,
+            title: "Secure & Private",
+            description: "Your business data is encrypted and protected with enterprise-level security"
+        }
+    ]
 
-  const currentYear = new Date().getFullYear()
+    const benefits = [
+        "Save hours on manual record keeping every week",
+        "Never lose track of customer payments again",
+        "Make data-driven business decisions with real insights",
+        "Scale your business without hiring more staff",
+        "Reduce errors and improve accuracy",
+        "Access your business info anytime, anywhere"
+    ]
 
-  useEffect(() => {
-    const initializeDashboard = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    const testimonials = [
+        {
+            name: "Chioma Okafor",
+            role: "Fashion Retailer",
+            message: "This app saved me so much time! I used to spend hours writing invoices by hand. Now I track everything in minutes.",
+            business: "Chichi's Fashion Store"
+        },
+        {
+            name: "Tunde Adeleke",
+            role: "Electronics Seller",
+            message: "Finally, a tool that understands Nigerian businesses. The payment tracking feature has helped me recover ₦200k in unpaid invoices.",
+            business: "Tunde Electronics"
+        },
+        {
+            name: "Amara Nwosu",
+            role: "Food Business Owner",
+            message: "The inventory and sales tracking helped me identify which products are most profitable. My margins improved by 15%!",
+            business: "Amara's Kitchen Supplies"
+        }
+    ]
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
+    const pricingPlans = [
+        {
+            name: "Starter",
+            price: "₦0",
+            period: "Forever Free",
+            description: "Perfect for just starting out",
+            features: [
+                "Up to 100 sales records",
+                "Basic inventory tracking",
+                "10 customers",
+                "Email support"
+            ],
+            cta: "Get Started",
+            highlighted: false
+        },
+        {
+            name: "Professional",
+            price: "₦4,999",
+            period: "Per month",
+            description: "For growing businesses",
+            features: [
+                "Unlimited sales records",
+                "Unlimited customers",
+                "Advanced analytics",
+                "Priority support",
+                "Invoice customization",
+                "Export reports"
+            ],
+            cta: "Start Free Trial",
+            highlighted: true
+        },
+        {
+            name: "Enterprise",
+            price: "Custom",
+            period: "Contact us",
+            description: "For large operations",
+            features: [
+                "Everything in Professional",
+                "Custom integrations",
+                "Dedicated account manager",
+                "Advanced security features",
+                "Staff management",
+                "API access"
+            ],
+            cta: "Contact Sales",
+            highlighted: false
+        }
+    ]
 
-      if (!profileData) {
-        window.location.href = "/profile"
-        return
-      }
-
-      setProfile(profileData)
-
-      const { data: sales } = await supabase
-        .from("sales")
-        .select("total_amount, total_profit, outstanding, status, date")
-        .eq("user_id", user.id)
-
-      if (sales) {
-        setStats({
-          totalSales: sales.reduce((s, i) => s + Number(i.total_amount), 0),
-          totalProfit: sales.reduce(
-            (s, i) => s + (Number(i.total_profit)),
-            0
-          ),
-          outstanding: sales.reduce((s, i) => s + Number(i.outstanding), 0),
-          unpaidCount: sales.filter((s) => s.status !== "Paid").length
-        })
-      }
-
-      // Fetch goal for current year
-      const { data: goalData } = await supabase
-        .from("goals")
-        .select("sales_goal")
-        .eq("user_id", user.id)
-        .eq("year", currentYear)
-        .single()
-
-      if (goalData) {
-        setGoal(goalData.sales_goal)
-        setGoalInput(goalData.sales_goal.toString())
-
-        const totalYearlySales = sales
-          ?.filter((s) => new Date(s.date).getFullYear() === currentYear)
-          .reduce((sum, s) => sum + Number(s.total_amount), 0) || 0
-
-        const progress = Math.min((totalYearlySales / goalData.sales_goal) * 100, 100)
-        setGoalProgress(progress)
-        if (progress >= 100) setGoalReached(true)
-      }
-
-      const { data: recent } = await supabase
-        .from("sales")
-        .select("id, date, customer_name, total_amount, status")
-        .eq("user_id", user.id)
-        .order("date", { ascending: false })
-        .limit(5)
-
-      setRecentSales(recent || [])
-      setLoading(false)
-    }
-
-    initializeDashboard()
-  }, [])
-
-  const handleSaveGoal = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
-
-    setSavingGoal(true)
-
-    const salesGoal = Number(goalInput)
-    if (isNaN(salesGoal) || salesGoal <= 0) {
-      alert("Please enter a valid goal")
-      setSavingGoal(false)
-      return
-    }
-
-    const { error } = await supabase
-      .from("goals")
-      .upsert(
-        [{ user_id: user.id, year: currentYear, sales_goal: salesGoal }],
-        { onConflict: "user_id,year" }
-      )
-
-    if (error) {
-      console.error("Failed to save goal:", error)
-      alert("Failed to save goal, try again")
-      setSavingGoal(false)
-      return
-    }
-
-    setGoal(salesGoal)
-
-    const totalYearlySales = recentSales
-      .filter((s) => new Date(s.date).getFullYear() === currentYear)
-      .reduce((sum, s) => sum + Number(s.total_amount), 0)
-
-    const progress = Math.min((totalYearlySales / salesGoal) * 100, 100)
-    setGoalProgress(progress)
-    setGoalReached(progress >= 100)
-    setEditingGoal(false)
-    setSavingGoal(false)
-  }
-
-  if (loading) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8">
-          <div className="max-w-7xl mx-auto space-y-6">
-            <Skeleton className="h-10 w-2/3 rounded-lg" />
-            <div className="grid grid-cols-2 gap-3">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-xl" />
-              ))}
-            </div>
-            <Skeleton className="h-48 w-full rounded-xl" />
-            <div className="space-y-3">
-              <Skeleton className="h-6 w-1/3 rounded-lg" />
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full rounded-lg" />
-              ))}
-            </div>
-          </div>
+        <div className="min-h-screen bg-white">
+            {/* Navigation */}
+            <nav className="sticky top-0 z-40 bg-white border-b border-slate-100">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-lg flex items-center justify-center">
+                                <BarChart3 size={24} className="text-white" />
+                            </div>
+                            <span className="text-xl font-bold text-slate-900">Flow</span>
+                        </div>
+
+                        {/* Desktop Menu */}
+                        <div className="hidden sm:flex items-center gap-8">
+                            <a href="#features" className="text-slate-600 hover:text-slate-900 transition font-medium">Features</a>
+                            <a href="#benefits" className="text-slate-600 hover:text-slate-900 transition font-medium">Why Us</a>
+                            <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition font-medium">Pricing</a>
+                            <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition font-medium">Stories</a>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/login"
+                                className="hidden sm:inline-flex px-6 py-2.5 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition font-semibold"
+                            >
+                                Sign In
+                            </Link>
+                            <Link
+                                href="/login"
+                                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-semibold"
+                            >
+                                Get Started
+                            </Link>
+
+                            {/* Mobile Menu Button */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="sm:hidden p-2 text-slate-900"
+                            >
+                                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Mobile Menu */}
+                    {mobileMenuOpen && (
+                        <div className="sm:hidden mt-4 pb-4 space-y-3 border-t border-slate-100 pt-4">
+                            <a href="#features" className="block text-slate-600 hover:text-slate-900 font-medium">Features</a>
+                            <a href="#benefits" className="block text-slate-600 hover:text-slate-900 font-medium">Why Us</a>
+                            <a href="#pricing" className="block text-slate-600 hover:text-slate-900 font-medium">Pricing</a>
+                            <a href="#testimonials" className="block text-slate-600 hover:text-slate-900 font-medium">Stories</a>
+                            <Link href="/login" className="block text-slate-600 hover:text-slate-900 font-medium">Sign In</Link>
+                        </div>
+                    )}
+                </div>
+            </nav>
+
+            {/* Hero Section */}
+            <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-50 py-20 sm:py-32">
+                <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+                </div>
+
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center space-y-8">
+                        <div className="space-y-4">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
+                                Manage Your Business <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">The Smart Way</span>
+                            </h1>
+                            <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
+                                Track sales, manage customers, and grow your business with Nigeria's #1 sales management app for SMEs
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                            <Link
+                                href="/login"
+                                className="w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-lg transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            >
+                                Start Free <ArrowRight size={20} />
+                            </Link>
+                            <Link
+                                href="#features"
+                                className="w-full sm:w-auto px-8 py-4 border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white rounded-lg font-semibold text-lg transition"
+                            >
+                                Learn More
+                            </Link>
+                        </div>
+
+                        <p className="text-sm text-slate-600">
+                            ✓ No credit card required · ✓ 7-day free trial · ✓ Cancel anytime
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section id="features" className="py-20 sm:py-32 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Powerful Features Built for Your Business</h2>
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">Everything you need to manage sales, customers, and inventory in one place</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                        {features.map((feature, idx) => (
+                            <div key={idx} className="p-8 border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-lg transition group bg-slate-50">
+                                <div className="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 group-hover:scale-110 transition">
+                                    {feature.icon}
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
+                                <p className="text-slate-600">{feature.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Benefits Section */}
+            <section id="benefits" className="py-20 sm:py-32 bg-slate-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">Why Nigerian Businesses Choose Us</h2>
+                            <p className="text-lg text-slate-600 mb-8">Built by Nigerians, for Nigerians. We understand the unique challenges of running a business in Nigeria.</p>
+
+                            <ul className="space-y-4">
+                                {benefits.map((benefit, idx) => (
+                                    <li key={idx} className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                            <Check size={16} className="text-emerald-600" />
+                                        </div>
+                                        <span className="text-slate-900 font-medium">{benefit}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="hidden lg:grid grid-cols-2 gap-6">
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition">
+                                    <DollarSign size={32} className="text-emerald-600 mb-3" />
+                                    <h3 className="font-bold text-slate-900 mb-2">Save Money</h3>
+                                    <p className="text-sm text-slate-600">Cut operational costs and eliminate manual work</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition">
+                                    <Smartphone size={32} className="text-teal-600 mb-3" />
+                                    <h3 className="font-bold text-slate-900 mb-2">Mobile-First</h3>
+                                    <p className="text-sm text-slate-600">Works perfectly on your phone or laptop</p>
+                                </div>
+                            </div>
+                            <div className="space-y-6 mt-8">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition">
+                                    <TrendingUp size={32} className="text-cyan-600 mb-3" />
+                                    <h3 className="font-bold text-slate-900 mb-2">Grow Faster</h3>
+                                    <p className="text-sm text-slate-600">Scale without hiring more staff</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition">
+                                    <Headphones size={32} className="text-emerald-700 mb-3" />
+                                    <h3 className="font-bold text-slate-900 mb-2">24/7 Support</h3>
+                                    <p className="text-sm text-slate-600">Help whenever you need it in Yoruba or English</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Testimonials Section */}
+            <section id="testimonials" className="py-20 sm:py-32 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Loved by Business Owners Across Nigeria</h2>
+                        <p className="text-lg text-slate-600">See how Flow is helping Nigerian businesses grow</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                        {testimonials.map((testimonial, idx) => (
+                            <div key={idx} className="p-8 bg-slate-50 border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-md transition">
+                                <div className="flex gap-1 mb-4">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-yellow-400">★</span>
+                                    ))}
+                                </div>
+                                <p className="text-slate-700 mb-4 italic">"{testimonial.message}"</p>
+                                <div>
+                                    <p className="font-bold text-slate-900">{testimonial.name}</p>
+                                    <p className="text-sm text-slate-600">{testimonial.role}</p>
+                                    <p className="text-xs text-slate-500 mt-1">{testimonial.business}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section id="pricing" className="py-20 sm:py-32 bg-slate-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
+                        <p className="text-lg text-slate-600">Choose the plan that's right for your business</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {pricingPlans.map((plan, idx) => (
+                            <div
+                                key={idx}
+                                className={`rounded-2xl transition ${
+                                    plan.highlighted
+                                        ? "lg:scale-105 bg-gradient-to-br from-emerald-600 to-teal-600 p-8 text-white shadow-2xl border-0"
+                                        : "bg-white border border-slate-200 p-8"
+                                }`}
+                            >
+                                <h3 className={`text-2xl font-bold mb-2 ${plan.highlighted ? "text-white" : "text-slate-900"}`}>
+                                    {plan.name}
+                                </h3>
+                                <p className={plan.highlighted ? "text-emerald-100" : "text-slate-600"}>
+                                    {plan.description}
+                                </p>
+
+                                <div className="my-6">
+                                    <span className={`text-4xl font-bold ${plan.highlighted ? "text-white" : "text-slate-900"}`}>
+                                        {plan.price}
+                                    </span>
+                                    <span className={`text-sm ml-2 ${plan.highlighted ? "text-emerald-100" : "text-slate-600"}`}>
+                                        {plan.period}
+                                    </span>
+                                </div>
+
+                                <button
+                                    className={`w-full py-3 rounded-lg font-semibold mb-6 transition ${
+                                        plan.highlighted
+                                            ? "bg-white text-emerald-600 hover:bg-slate-100"
+                                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    }`}
+                                >
+                                    {plan.cta}
+                                </button>
+
+                                <ul className="space-y-3">
+                                    {plan.features.map((feature, fIdx) => (
+                                        <li key={fIdx} className="flex items-start gap-3">
+                                            <Check size={20} className={plan.highlighted ? "text-emerald-100" : "text-emerald-600"} />
+                                            <span className={plan.highlighted ? "text-emerald-50" : "text-slate-700"}>
+                                                {feature}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-20 sm:py-32 bg-gradient-to-r from-emerald-600 to-teal-600 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+                </div>
+
+                <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">Ready to Transform Your Business?</h2>
+                    <p className="text-lg sm:text-xl text-emerald-50 mb-8">Join thousands of Nigerian business owners managing their sales smarter</p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                        <Link
+                            href="/login"
+                            className="w-full sm:w-auto px-8 py-4 bg-white text-emerald-600 hover:bg-slate-100 rounded-lg font-semibold text-lg transition shadow-lg flex items-center justify-center gap-2"
+                        >
+                            Get Started Free <ArrowRight size={20} />
+                        </Link>
+                        <Link
+                            href="#"
+                            className="w-full sm:w-auto px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-emerald-600 rounded-lg font-semibold text-lg transition"
+                        >
+                            Schedule Demo
+                        </Link>
+                    </div>
+
+                    <p className="text-emerald-50 text-sm mt-6">No credit card needed • Free forever plan available</p>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="bg-slate-900 text-slate-300 py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+                                    <BarChart3 size={20} className="text-white" />
+                                </div>
+                                <span className="font-bold text-white">Flow</span>
+                            </div>
+                            <p className="text-sm text-slate-400">The #1 sales management app for Nigerian SMEs</p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-white mb-4">Product</h4>
+                            <ul className="space-y-2 text-sm">
+                                <li><a href="#features" className="hover:text-white transition">Features</a></li>
+                                <li><a href="#pricing" className="hover:text-white transition">Pricing</a></li>
+                                <li><a href="#" className="hover:text-white transition">FAQ</a></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-white mb-4">Company</h4>
+                            <ul className="space-y-2 text-sm">
+                                <li><a href="#" className="hover:text-white transition">About</a></li>
+                                <li><a href="#" className="hover:text-white transition">Blog</a></li>
+                                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-white mb-4">Legal</h4>
+                            <ul className="space-y-2 text-sm">
+                                <li><a href="#" className="hover:text-white transition">Privacy</a></li>
+                                <li><a href="#" className="hover:text-white transition">Terms</a></li>
+                                <li><a href="#" className="hover:text-white transition">Security</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row items-center justify-between">
+                        <p className="text-sm text-slate-400">© 2024 Flow. All rights reserved.</p>
+                        <div className="flex gap-4 mt-4 sm:mt-0">
+                            <a href="#" className="text-slate-400 hover:text-white transition">Twitter</a>
+                            <a href="#" className="text-slate-400 hover:text-white transition">Instagram</a>
+                            <a href="#" className="text-slate-400 hover:text-white transition">LinkedIn</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
-      </ProtectedRoute>
     )
-  }
-
-  return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900">
-        {/* Main Content */}
-        <div className="px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
-          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-
-            {/* Profile Header */}
-            <div>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-1 sm:mb-2">
-                Welcome back! 👋
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                {profile.full_name && <span className="font-semibold">{profile.full_name}</span>}
-                {profile.full_name && profile.business_name && <span> • </span>}
-                {profile.business_name && <span>{profile.business_name}</span>}
-              </p>
-            </div>
-
-            {/* Sales Goal Card */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-4 sm:p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-3 mb-4 sm:mb-6">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0 mt-0.5">
-                    <TrendingUp size={18} className="text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
-                      {currentYear} Sales Goal
-                    </h3>
-                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1 truncate">
-                      {goal ? `₦${goal.toLocaleString()}` : "No goal set"}
-                    </p>
-                  </div>
-                </div>
-
-                {editingGoal ? (
-                  <button
-                    onClick={handleSaveGoal}
-                    disabled={savingGoal}
-                    className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm disabled:opacity-50 transition flex-shrink-0"
-                  >
-                    <Save size={16} />
-                    <span className="hidden sm:inline">{savingGoal ? "Saving..." : "Save"}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setEditingGoal(true)}
-                    className="inline-flex items-center gap-1 px-3 py-2 border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-neutral-700 transition flex-shrink-0"
-                  >
-                    <Edit size={16} />
-                    <span className="hidden sm:inline">{goal ? "Edit" : "Set"}</span>
-                  </button>
-                )}
-              </div>
-
-              {editingGoal ? (
-                <input
-                  type="number"
-                  placeholder="Enter yearly goal"
-                  value={goalInput}
-                  onChange={(e) => setGoalInput(e.target.value)}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 transition"
-                  autoFocus
-                />
-              ) : (
-                <>
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Progress</span>
-                      <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-                        {goalProgress.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 sm:h-3 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          goalReached ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-blue-500 to-blue-600"
-                        }`}
-                        style={{ width: `${goalProgress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {goalReached && (
-                    <div className="flex items-start gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                      <CheckCircle size={16} className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-400">
-                        🎉 Goal reached!
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Stats Grid - Mobile Optimized */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-              <MetricCard
-                icon={<DollarSign size={18} />}
-                title="Total Sales"
-                value={`₦${(stats.totalSales / 1000000).toFixed(3)}M`}
-                fullValue={`₦${stats.totalSales.toLocaleString()}`}
-                color="blue"
-              />
-              <MetricCard
-                icon={<TrendingUp size={18} />}
-                title="Total Profit"
-                value={`₦${(stats.totalProfit / 1000000).toFixed(3)}M`}
-                fullValue={`₦${stats.totalProfit.toLocaleString()}`}
-                color="green"
-              />
-              <MetricCard
-                icon={<AlertCircle size={18} />}
-                title="Outstanding"
-                value={`₦${(stats.outstanding / 1000000).toFixed(3)}M`}
-                fullValue={`₦${stats.outstanding.toLocaleString()}`}
-                color="amber"
-              />
-              <MetricCard
-                icon={<Calendar size={18} />}
-                title="Unpaid"
-                value={stats.unpaidCount.toString()}
-                fullValue={`${stats.unpaidCount} records`}
-                color="red"
-              />
-            </div>
-
-            {/* Recent Sales */}
-            <RecentSalesTable sales={recentSales} />
-
-          </div>
-        </div>
-
-        {/* Floating Action Button - Mobile */}
-        <a
-          href="/sales/new"
-          className="fixed bottom-6 right-4 sm:hidden w-14 h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:shadow-xl transition active:scale-95 z-40"
-        >
-          <Plus size={24} />
-        </a>
-
-        {/* Bottom Safe Area Spacer */}
-        <div className="h-6 sm:hidden" />
-      </div>
-    </ProtectedRoute>
-  )
-}
-
-function MetricCard({
-  icon,
-  title,
-  value,
-  fullValue,
-  color,
-}: {
-  icon: React.ReactNode
-  title: string
-  value: string
-  fullValue: string
-  color: "blue" | "green" | "amber" | "red"
-}) {
-  const colorMap = {
-    blue: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400",
-    green: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400",
-    amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400",
-    red: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400",
-  }
-
-  return (
-    <div className={`rounded-xl border p-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 shadow-sm ${colorMap[color]}`} title={fullValue}>
-      <div className="flex items-center">
-        <div className="p-1.5 sm:p-2 bg-white/50 dark:bg-neutral-800/50 rounded-lg">
-          {icon}
-        </div>
-      </div>
-      <div>
-        <p className="text-xs sm:text-sm font-medium opacity-80">{title}</p>
-        <p className="text-lg sm:text-2xl font-bold mt-1">{value}</p>
-      </div>
-    </div>
-  )
-}
-
-function RecentSalesTable({ sales }: { sales: any[] }) {
-  return (
-    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-neutral-800">
-        <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-          Recent Sales
-        </h2>
-        <a
-          href="/sales"
-          className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition"
-        >
-          View all
-        </a>
-      </div>
-
-      {sales.length === 0 ? (
-        <div className="text-center py-12 px-4 sm:px-6">
-          <DollarSign size={40} className="mx-auto text-slate-300 dark:text-neutral-700 mb-3" />
-          <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">No sales yet</p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Start by adding your first sale</p>
-          <a
-            href="/sales/new"
-            className="inline-flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition"
-          >
-            <Plus size={16} />
-            Add Sale
-          </a>
-        </div>
-      ) : (
-        <div className="divide-y divide-slate-200 dark:divide-neutral-800">
-          {sales.map((sale) => (
-            <a
-              key={sale.id}
-              href={`/sales/${sale.id}/info`}
-              className="block px-4 py-4 sm:px-6 sm:py-4 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition active:bg-slate-100 dark:active:bg-neutral-800"
-            >
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                    {sale.customer_name}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
-                    {new Date(sale.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-                <ChevronRight size={18} className="text-slate-400 dark:text-slate-600 flex-shrink-0" />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-slate-900 dark:text-white text-sm">
-                  ₦{Number(sale.total_amount).toLocaleString()}
-                </p>
-                <StatusBadge status={sale.status} />
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
-
-      {sales.length > 0 && (
-        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-center sm:hidden">
-          <a
-            href="/sales/new"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold text-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition"
-          >
-            <Plus size={16} />
-            Add New Sale
-          </a>
-        </div>
-      )}
-    </div>
-  )
 }

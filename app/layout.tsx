@@ -29,7 +29,7 @@ export default function RootLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const tabs = [
-    { name: "Home", href: "/", icon: <Home size={20} /> },
+    { name: "Home", href: "/home", icon: <Home size={20} /> },
     { name: "Sales", href: "/sales", icon: <BarChart size={20} /> },
     // { name: "Customers", href: "/customers", icon: <User size={20} /> },
     { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
@@ -37,7 +37,7 @@ export default function RootLayout({
     { name: "More", href: "/more", icon: <DotSquare size={20} /> },
   ]
 
-  const showNav = !["/login", "/auth"].includes(pathname)
+  const showNav = !["/login", "/auth", "/"].includes(pathname)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

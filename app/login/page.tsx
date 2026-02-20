@@ -38,7 +38,7 @@ export default function AuthPage() {
     setLoading(false)
     if (!error) {
       setSuccess(true)
-      setTimeout(() => router.push("/"), 1000)
+      setTimeout(() => router.push("/home"), 1000)
     } else {
       setError(error.message || "Login failed")
     }
@@ -64,7 +64,7 @@ export default function AuthPage() {
     setLoading(false)
     if (!error) {
       setSuccess(true)
-      setTimeout(() => router.push("/"), 1000)
+      setTimeout(() => router.push("/home"), 1000)
     } else {
       setError(error.message || "Signup failed")
     }

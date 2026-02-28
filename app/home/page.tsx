@@ -277,7 +277,7 @@ export default function Dashboard() {
               <MetricCard
                 icon={<TrendingUp size={18} />}
                 title="Total Profit"
-                value={`₦${(stats.totalProfit / 1000000).toFixed()}M`}
+                value={`₦${(stats.totalProfit / 1000000).toFixed(3)}M`}
                 fullValue={`₦${stats.totalProfit.toLocaleString()}`}
                 color="green"
               />

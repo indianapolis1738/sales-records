@@ -64,7 +64,8 @@ export default function RootLayout({
           font-sans min-h-screen
           ${geistSans.variable} ${geistMono.variable}
         `}
-      ><ClarityProvider />
+      >
+        <ClarityProvider />
         <div className="flex min-h-screen">
           
           {/* Sidebar (Desktop) */}

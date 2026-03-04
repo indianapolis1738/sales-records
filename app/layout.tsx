@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import "./globals.css"
-import { BarChart, Calculator, DotSquare, Home, Plus, LogOut, Settings, User } from "lucide-react"
+import { BarChart, Calculator, DotSquare, Home, Plus, LogOut, Settings, User, CreditCardIcon } from "lucide-react"
 import IOSInstallPrompt from "@/components/IOSInstallPrompt"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -33,8 +33,9 @@ export default function RootLayout({
     { name: "Home", href: "/home", icon: <Home size={20} /> },
     { name: "Sales", href: "/sales", icon: <BarChart size={20} /> },
     // { name: "Customers", href: "/customers", icon: <User size={20} /> },
-    { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
+    // { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
     { name: "Tax", href: "/tax", icon: <Calculator size={20} /> },
+    { name: "Expenses", href: "/expenses", icon: <CreditCardIcon size={20} /> },
     { name: "More", href: "/more", icon: <DotSquare size={20} /> },
   ]
 

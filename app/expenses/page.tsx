@@ -292,7 +292,7 @@ export default function ExpensesPage() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex justify-center gap-2">
+                        <div className="flex justify-center gap-2 mb-20">
                             {[...Array(totalPages)].map((_, i) => (
                                 <button
                                     key={i}

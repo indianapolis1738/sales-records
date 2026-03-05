@@ -215,7 +215,7 @@ export default function AddSale() {
     })
 
     setLoading(false)
-    router.push("/")
+    router.push("/sales")
   }
 
   return (

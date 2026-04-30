@@ -37,9 +37,10 @@ export default function RootLayout({
     { name: "Tax", href: "/tax", icon: <Calculator size={20} /> },
     { name: "Expenses", href: "/expenses", icon: <CreditCardIcon size={20} /> },
     { name: "More", href: "/more", icon: <DotSquare size={20} /> },
+    { name: "Staff", href: "/staff", icon: <User size={20} /> },
   ]
 
-  const showNav = !["/login", "/auth", "/"].includes(pathname)
+  const showNav = !["/login", "/auth"].includes(pathname)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

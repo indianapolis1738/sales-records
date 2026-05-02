@@ -39,6 +39,13 @@ export default function MorePage() {
       icon: <Settings size={24} />,
       path: "/security",
       color: "amber"
+    },
+    {
+      name: "Staffs",
+      description: "Manage staffs and payroll",
+      icon: <User size={24} />,
+      path: "/staff",
+      color: "blue"
     }
   ]
 

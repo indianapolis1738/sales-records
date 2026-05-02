@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { ChevronLeft, Phone, MessageCircle, Mail, Edit2, Calendar, DollarSign, TrendingUp, Package } from "lucide-react"
+import { ChevronLeft, Phone, MessageCircle, Mail, Edit2, Calendar, DollarSign, TrendingUp, Package, X } from "lucide-react"
 
 type Sale = {
     id: string
@@ -444,12 +444,27 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
         }
     }
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Escape") {
+            onClose()
+        }
+    }
+
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center sm:justify-center p-4">
-            <div className="bg-white dark:bg-neutral-900 w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto">
-                <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Edit Customer</h2>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">Update customer information</p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4" onKeyDown={handleKeyDown}>
+            <div className="bg-white dark:bg-neutral-900 w-full sm:max-w-lg rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-neutral-800">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Edit Customer</h2>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">Update customer information</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition flex-shrink-0"
+                        aria-label="Close"
+                    >
+                        <X size={20} className="sm:w-6 sm:h-6 text-slate-600 dark:text-slate-400" />
+                    </button>
                 </div>
 
                 <div className="space-y-3 sm:space-y-4">
@@ -459,7 +474,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                         </label>
                         <input
                             type="text"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition text-sm"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition text-sm"
                             placeholder="Full name"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
@@ -472,7 +487,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                         </label>
                         <input
                             type="tel"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition text-sm"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition text-sm"
                             placeholder="Phone number"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
@@ -485,7 +500,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                         </label>
                         <input
                             type="email"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition text-sm"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition text-sm"
                             placeholder="Email address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -497,7 +512,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                             Status
                         </label>
                         <select
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition text-sm"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition text-sm appearance-none cursor-pointer"
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
                         >
@@ -512,7 +527,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                             Notes
                         </label>
                         <textarea
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition resize-none text-sm"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition resize-none text-sm"
                             placeholder="Add notes about this customer"
                             rows={4}
                             value={notes}
@@ -521,10 +536,11 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                     </div>
                 </div>
 
-                <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200 dark:border-neutral-800">
+                <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-slate-200 dark:border-neutral-800">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition text-sm sm:text-base"
+                        disabled={saving}
+                        className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 transition text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Cancel
                     </button>
@@ -532,7 +548,7 @@ function EditCustomerModal({ customer, onClose, onUpdated }: any) {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm sm:text-base"
+                        className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-lg font-semibold transition text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {saving ? "Saving..." : "Save Changes"}
                     </button>

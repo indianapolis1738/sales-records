@@ -29,16 +29,20 @@ export default function RootLayout({
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  const tabs = [
-    { name: "Home", href: "/home", icon: <Home size={20} /> },
-    { name: "Sales", href: "/sales", icon: <BarChart size={20} /> },
-    // { name: "Customers", href: "/customers", icon: <User size={20} /> },
-    // { name: "New Sale", href: "/sales/new", icon: <Plus size={20} /> },
-    { name: "Tax", href: "/tax", icon: <Calculator size={20} /> },
-    { name: "Expenses", href: "/expenses", icon: <CreditCardIcon size={20} /> },
-    { name: "More", href: "/more", icon: <DotSquare size={20} /> },
-    { name: "Staff", href: "/staff", icon: <User size={20} /> },
+  const allTabs = [
+    { name: "Home", href: "/home", icon: <Home size={20} />, mobileOnly: false },
+    { name: "Sales", href: "/sales", icon: <BarChart size={20} />, mobileOnly: false },
+    { name: "Tax", href: "/tax", icon: <Calculator size={20} />, mobileOnly: false },
+    { name: "Expenses", href: "/expenses", icon: <CreditCardIcon size={20} />, mobileOnly: false },
+    { name: "More", href: "/more", icon: <DotSquare size={20} />, mobileOnly: false },
+    // { name: "Staff", href: "/staff", icon: <User size={20} />, mobileOnly: true },
   ]
+
+  // Desktop tabs (all except Staff)
+  const desktopTabs = allTabs.filter(tab => !tab.mobileOnly)
+
+  // Mobile tabs (all except Staff)
+  const mobileTabs = allTabs.filter(tab => !tab.mobileOnly)
 
   const showNav = !["/login", "/auth"].includes(pathname)
 
@@ -94,8 +98,8 @@ export default function RootLayout({
 
               {/* Navigation */}
               <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
-                {tabs.map((tab) => {
-                   const isActive = pathname === tab.href
+                {desktopTabs.map((tab) => {
+                  const isActive = pathname === tab.href
                   return (
                     <Link
                       key={tab.name}
@@ -122,7 +126,7 @@ export default function RootLayout({
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition ${sidebarOpen ? "" : "justify-center"}`}
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                       A
                     </div>
                     {sidebarOpen && (
@@ -135,10 +139,6 @@ export default function RootLayout({
 
                   {showProfileMenu && sidebarOpen && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg shadow-lg p-2 space-y-1">
-                      {/* <button className="w-full flex items-center gap-3 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition">
-                        <Settings size={16} />
-                        Settings
-                      </button> */}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-3 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
@@ -162,7 +162,7 @@ export default function RootLayout({
         {/* Bottom Tabs (Mobile only) */}
         {showNav && (
           <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-slate-200 dark:border-neutral-800 flex justify-between items-center h-20 px-2 shadow-2xl z-50">
-            {tabs.map((tab) => {
+            {mobileTabs.map((tab) => {
               const isActive = pathname === tab.href
               return (
                 <Link

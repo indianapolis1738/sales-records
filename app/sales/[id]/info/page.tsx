@@ -218,14 +218,38 @@ export default function SaleInfo() {
   const downloadPDF = async () => {
     if (!receiptRef.current) return
 
-    const canvas = await html2canvas(receiptRef.current, { scale: 2 })
+    const canvas = await html2canvas(receiptRef.current, {
+      scale: 2,
+      useCORS: true,
+    })
+
     const imgData = canvas.toDataURL("image/png")
 
     const pdf = new jsPDF("p", "mm", "a4")
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+
+    const imgWidth = pdfWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let heightLeft = imgHeight
+    let position = 0
+
+    // First page
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight)
+    heightLeft -= pdfHeight
+
+    // Additional pages if content exceeds one page
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight
+
+      pdf.addPage()
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight)
+
+      heightLeft -= pdfHeight
+    }
+
     pdf.save(
       `${isReceipt ? "receipt" : "invoice"}-${invoice.invoice_number}.pdf`
     )
@@ -498,16 +522,16 @@ export default function SaleInfo() {
           style={{
             position: "absolute",
             left: "-9999px",
-            width: 650,
-            padding: 40,
+            width: 620,
+            padding: 28,
+            fontSize: 11,
             backgroundColor: "#ffffff",
             fontFamily: "'Segoe UI', 'Helvetica Neue', sans-serif",
             color: "#1e293b",
-            fontSize: 13,
           }}
         >
           {/* Header */}
-          <div style={{ marginBottom: 40, borderBottom: "3px solid #0f172a", paddingBottom: 30 }}>
+          <div style={{ marginBottom: 24, borderBottom: "3px solid #0f172a", paddingBottom: 30 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
               <div>
                 <h1 style={{ fontSize: "32px", fontWeight: "700", margin: "0 0 5px 0", color: "#0f172a" }}>
@@ -548,7 +572,7 @@ export default function SaleInfo() {
           </div>
 
           {/* Invoice Info */}
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40, gap: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, gap: 20 }}>
             <div style={{ flex: 1 }}>
               <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>
                 Bill To
@@ -556,9 +580,9 @@ export default function SaleInfo() {
               <p style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>
                 {invoice.customer_name}
               </p>
-              <div style={{ 
-                backgroundColor: "#f1f5f9", 
-                padding: "12px", 
+              {/* <div style={{
+                backgroundColor: "#f1f5f9",
+                padding: "12px",
                 borderRadius: "6px",
                 marginTop: 8,
                 border: "1px solid #e2e8f0"
@@ -566,7 +590,7 @@ export default function SaleInfo() {
                 <p style={{ margin: "0", fontSize: "12px", color: "#475569" }}>
                   Customer Order
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <div style={{ flex: 1 }}>
@@ -727,7 +751,7 @@ export default function SaleInfo() {
           </table>
 
           {/* Summary Section */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 40 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
             <div style={{ width: "320px" }}>
               {/* Subtotal */}
               <div style={{
@@ -779,13 +803,141 @@ export default function SaleInfo() {
             </div>
           </div>
 
+          {/* Bank Details - Only for Unpaid Invoices */}
+          {!isReceipt && profile.bank_name && profile.account_number && (
+            <div
+              style={{
+                marginBottom: 16,
+                backgroundColor: "#f8fafc",
+                border: "1px solid #dbeafe",
+                borderRadius: "10px",
+                padding: "12px 14px",
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 10px 0",
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  color: "#1e40af",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                }}
+              >
+                Payment Details
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
+                {/* Bank Name */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderBottom: "1px solid #e2e8f0",
+                    paddingBottom: "6px",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#64748b",
+                      fontSize: "10px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Bank Name
+                  </span>
+
+                  <span
+                    style={{
+                      color: "#0f172a",
+                      fontSize: "10px",
+                      fontWeight: "700",
+                    }}
+                  >
+                    {profile.bank_name}
+                  </span>
+                </div>
+
+                {/* Account Name */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderBottom: "1px solid #e2e8f0",
+                    paddingBottom: "6px",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#64748b",
+                      fontSize: "10px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Account Name
+                  </span>
+
+                  <span
+                    style={{
+                      color: "#0f172a",
+                      fontSize: "10px",
+                      fontWeight: "700",
+                      maxWidth: "60%",
+                      textAlign: "right",
+                    }}
+                  >
+                    {profile.account_name}
+                  </span>
+                </div>
+
+                {/* Account Number */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#64748b",
+                      fontSize: "10px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Account Number
+                  </span>
+
+                  <span
+                    style={{
+                      color: "#1e40af",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {profile.account_number}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Footer */}
           <div style={{
             borderTop: "2px solid #e2e8f0",
-            paddingTop: 24,
+            paddingTop: 14,
             textAlign: "center",
             color: "#64748b",
-            fontSize: "11px"
+            fontSize: "9px"
           }}>
             <p style={{ margin: "0 0 8px 0", fontWeight: "600", color: "#0f172a" }}>
               Thank you for your business!
@@ -809,7 +961,7 @@ export default function SaleInfo() {
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white dark:bg-neutral-900 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 w-full sm:max-w-md p-5 sm:p-6 md:p-8 space-y-5 sm:space-y-6 shadow-2xl animate-in slide-in-from-bottom-5 sm:zoom-in-95">
-              
+
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center shrink-0 mx-auto">
                   <AlertCircle size={20} className="sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
@@ -864,7 +1016,7 @@ export default function SaleInfo() {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                
+
                 {/* Date Input */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
@@ -889,7 +1041,7 @@ export default function SaleInfo() {
                   <div className="space-y-3">
                     {editItems.map((item, index) => (
                       <div key={item.id} className="bg-slate-50 dark:bg-neutral-800/50 border border-slate-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
-                        
+
                         {/* Item Number */}
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Item {index + 1}</p>

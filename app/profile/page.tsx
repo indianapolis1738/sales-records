@@ -17,6 +17,12 @@ export default function ProfilePage() {
     phone_number?: string
     business_name?: string
     business_address?: string
+
+    /* ✅ BANK DETAILS */
+    bank_name?: string
+    account_name?: string
+    account_number?: string
+
     logo_path?: string
     logo_url?: string
     plan?: string
@@ -69,6 +75,11 @@ export default function ProfilePage() {
       phone_number: profile.phone_number,
       business_name: profile.business_name,
       business_address: profile.business_address,
+
+      /* ✅ NEW */
+      bank_name: profile.bank_name,
+      account_name: profile.account_name,
+      account_number: profile.account_number,
     }])
 
     setSaving(false)
@@ -317,6 +328,71 @@ export default function ProfilePage() {
                     />
                   </div>
 
+                  {/* ---------------- BANK DETAILS ---------------- */}
+                  <div className="pt-4 sm:pt-6 border-t border-slate-200 dark:border-neutral-800">
+                    <div className="mb-4">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                        Receiving Account
+                      </h3>
+
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        This account will appear on unpaid invoices and payment reminders.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+
+                      {/* Bank Name */}
+                      <div>
+                        <label className="block text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          Bank Name
+                        </label>
+
+                        <input
+                          placeholder="e.g GTBank"
+                          value={profile.bank_name || ""}
+                          onChange={(e) =>
+                            setProfile({ ...profile, bank_name: e.target.value })
+                          }
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                        />
+                      </div>
+
+                      {/* Account Name */}
+                      <div>
+                        <label className="block text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          Account Name
+                        </label>
+
+                        <input
+                          placeholder="e.g Techbay Devices Ltd"
+                          value={profile.account_name || ""}
+                          onChange={(e) =>
+                            setProfile({ ...profile, account_name: e.target.value })
+                          }
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                        />
+                      </div>
+
+                      {/* Account Number */}
+                      <div>
+                        <label className="block text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          Account Number
+                        </label>
+
+                        <input
+                          placeholder="0123456789"
+                          value={profile.account_number || ""}
+                          onChange={(e) =>
+                            setProfile({ ...profile, account_number: e.target.value })
+                          }
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
                   {/* Save Button */}
                   <button
                     onClick={handleSave}
@@ -333,7 +409,7 @@ export default function ProfilePage() {
           {/* Account Settings Section */}
           <div className="mt-6 sm:mt-8 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6">Account Settings</h2>
-            
+
             <div className="space-y-2 sm:space-y-3">
               {/* Change Password */}
               <button

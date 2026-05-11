@@ -46,6 +46,13 @@ export default function MorePage() {
       icon: <User size={24} />,
       path: "/staff",
       color: "blue"
+    },
+    {
+      name: "Storefront Settings",
+      description: "Customize your online store and checkout experience",
+      icon: <Settings size={24} />,
+      path: "/storefront-settings",
+      color: "purple"
     }
   ]
 

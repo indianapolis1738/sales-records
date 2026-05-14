@@ -15,10 +15,12 @@ type InventoryItem = {
   cost_price: number
   sales_price: number
   created_at: string
+  product_images?: string[]
 }
 
 export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -35,7 +37,7 @@ export default function InventoryPage() {
     imei: "",
     quantity: "",
     cost_price: "",
-    sales_price: ""
+    sales_price: "",
   })
   const [adjustQty, setAdjustQty] = useState("")
   const [saving, setSaving] = useState(false)
@@ -73,6 +75,76 @@ export default function InventoryPage() {
     setItems(data || [])
     setFilteredItems(data || [])
     setLoading(false)
+  }
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    item: InventoryItem
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return
+
+    const file = e.target.files[0]
+    setUploadingImage(true)
+
+    try {
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("inventory-images")
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage
+        .from("inventory-images")
+        .getPublicUrl(fileName)
+
+      const imageUrl = data.publicUrl
+
+      const updatedImages = [
+        ...(item.product_images || []),
+        imageUrl
+      ]
+
+      const { error: dbError } = await supabase
+        .from("inventory")
+        .update({
+          product_images: updatedImages
+        })
+        .eq("id", item.id)
+
+      if (dbError) throw dbError
+
+      fetchInventory()
+    } catch (err) {
+      console.error(err)
+      alert("Image upload failed")
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleDeleteImage = async (item: InventoryItem, imageUrl: string) => {
+    try {
+      const updatedImages = (item.product_images || []).filter(
+        (img) => img !== imageUrl
+      )
+
+      const { error } = await supabase
+        .from("inventory")
+        .update({
+          product_images: updatedImages,
+        })
+        .eq("id", item.id)
+
+      if (error) throw error
+
+      fetchInventory()
+    } catch (err) {
+      console.error(err)
+      alert("Failed to delete image")
+    }
   }
 
   const handleSaveProduct = async () => {
@@ -572,6 +644,39 @@ export default function InventoryPage() {
                     />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Product Image
+                  </label>
+
+                  {editingItem && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, editingItem)}
+                    />
+                  )}
+
+                  <div className="flex gap-2 flex-wrap">
+                    {editingItem?.product_images?.map((img, i) => (
+                      <div key={i} className="relative group">
+                        <img
+                          src={img}
+                          alt="Product"
+                          className="w-20 h-20 rounded-lg object-cover border"
+                        />
+
+                        {/* Delete button */}
+                        <button
+                          onClick={() => editingItem && handleDeleteImage(editingItem, img)}
+                          className="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 p-4 sm:p-6 border-t border-slate-200 dark:border-neutral-800 flex-shrink-0 bg-white dark:bg-neutral-900">
@@ -647,11 +752,10 @@ export default function InventoryPage() {
                 </button>
                 <button
                   onClick={handleAdjustStock}
-                  className={`flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-white rounded-lg font-semibold text-sm transition ${
-                    adjustModal.type === "add"
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-red-600 hover:bg-red-700"
-                  }`}
+                  className={`flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-white rounded-lg font-semibold text-sm transition ${adjustModal.type === "add"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                    }`}
                 >
                   {adjustModal.type === "add" ? "Add" : "Remove"}
                 </button>
@@ -714,25 +818,22 @@ function StatCard({
   highlight?: boolean
 }) {
   return (
-    <div className={`rounded-lg p-3 sm:p-6 border transition ${
-      highlight
-        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-        : "bg-white dark:bg-neutral-900 border-slate-200 dark:border-neutral-800"
-    }`}>
-      <p className={`text-xs font-semibold uppercase tracking-wide mb-1.5 sm:mb-2 flex items-center gap-2 ${
-        highlight
-          ? "text-blue-700 dark:text-blue-400"
-          : "text-slate-600 dark:text-slate-400"
+    <div className={`rounded-lg p-3 sm:p-6 border transition ${highlight
+      ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+      : "bg-white dark:bg-neutral-900 border-slate-200 dark:border-neutral-800"
       }`}>
+      <p className={`text-xs font-semibold uppercase tracking-wide mb-1.5 sm:mb-2 flex items-center gap-2 ${highlight
+        ? "text-blue-700 dark:text-blue-400"
+        : "text-slate-600 dark:text-slate-400"
+        }`}>
         <span className="text-base sm:text-lg">{icon}</span>
         <span className="hidden sm:inline">{label}</span>
         <span className="sm:hidden text-xs">{label.split(' ')[0]}</span>
       </p>
-      <p className={`text-xl sm:text-3xl font-bold ${
-        highlight
-          ? "text-blue-900 dark:text-blue-100"
-          : "text-slate-900 dark:text-white"
-      }`}>
+      <p className={`text-xl sm:text-3xl font-bold ${highlight
+        ? "text-blue-900 dark:text-blue-100"
+        : "text-slate-900 dark:text-white"
+        }`}>
         {value}
       </p>
     </div>

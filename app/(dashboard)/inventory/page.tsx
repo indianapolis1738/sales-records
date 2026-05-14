@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import { Plus, X, Search, Edit2, Trash2, ArrowUp, ArrowDown, Package, AlertCircle } from "lucide-react"
 import Skeleton from "@/components/Skeleton"
+import imageCompression from "browser-image-compression"
 
 type InventoryItem = {
   id: string
@@ -77,53 +78,77 @@ export default function InventoryPage() {
     setLoading(false)
   }
 
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    item: InventoryItem
-  ) => {
-    if (!e.target.files || e.target.files.length === 0) return
+  //Image compressor handler
 
-    const file = e.target.files[0]
-    setUploadingImage(true)
-
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 0.3, // target size (adjust: 0.2–0.5MB recommended)
+      maxWidthOrHeight: 1920, // keeps quality for product images
+      useWebWorker: true,
+      initialQuality: 0.7, // compression strength
+    }
+  
     try {
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from("inventory-images")
-        .upload(fileName, file)
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage
-        .from("inventory-images")
-        .getPublicUrl(fileName)
-
-      const imageUrl = data.publicUrl
-
-      const updatedImages = [
-        ...(item.product_images || []),
-        imageUrl
-      ]
-
-      const { error: dbError } = await supabase
-        .from("inventory")
-        .update({
-          product_images: updatedImages
-        })
-        .eq("id", item.id)
-
-      if (dbError) throw dbError
-
-      fetchInventory()
-    } catch (err) {
-      console.error(err)
-      alert("Image upload failed")
-    } finally {
-      setUploadingImage(false)
+      const compressedFile = await imageCompression(file, options)
+      return compressedFile
+    } catch (error) {
+      console.error("Compression error:", error)
+      return file // fallback to original
     }
   }
+
+  // Image upload handler
+  const handleImageUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>,
+  item: InventoryItem
+) => {
+  if (!e.target.files || e.target.files.length === 0) return
+
+  setUploadingImage(true)
+
+  try {
+    const rawFile = e.target.files[0]
+
+    // 🔥 compress here
+    const file = await compressImage(rawFile)
+
+    const fileExt = file.name.split(".").pop()
+    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from("inventory-images")
+      .upload(fileName, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from("inventory-images")
+      .getPublicUrl(fileName)
+
+    const imageUrl = data.publicUrl
+
+    const updatedImages = [
+      ...(item.product_images || []),
+      imageUrl,
+    ]
+
+    const { error: dbError } = await supabase
+      .from("inventory")
+      .update({
+        product_images: updatedImages,
+      })
+      .eq("id", item.id)
+
+    if (dbError) throw dbError
+
+    fetchInventory()
+  } catch (err) {
+    console.error(err)
+    alert("Image upload failed")
+  } finally {
+    setUploadingImage(false)
+  }
+}
 
   const handleDeleteImage = async (item: InventoryItem, imageUrl: string) => {
     try {

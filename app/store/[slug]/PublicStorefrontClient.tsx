@@ -523,7 +523,10 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                 )}
                                 {profile.tiktok_url && (
                                     <a href={profile.tiktok_url} className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition" target="_blank" rel="noopener noreferrer">
-                                        <Facebook size={18} />
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                            <path d="M16.5 3a5.5 5.5 0 0 0 5.5 5.5v3a8.5 8.5 0 0 1-6-2.5v5.5a6.5 6.5 0 1 1-6.5-6.5h1v3h-1a3.5 3.5 0 1 0 3.5 3.5V2h3z" />
+                                            <path d="M16.5 3a5.5 5.5 0 0 0 5.5 5.5v3a8.5 8.5 0 0 1-6-2.5v5.5a6.5 6.5 0 1 1-6.5-6.5h1v3h-1a3.5 3.5 0 1 0 3.5 3.5V2h3z" />
+                                        </svg>
                                     </a>
                                 )}
                             </div>

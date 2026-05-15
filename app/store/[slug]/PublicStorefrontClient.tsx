@@ -121,7 +121,7 @@ export default function PublicStorefront() {
     }
 
     const handleWhatsAppOrder = (product: any, qty: number = 1) => {
-        const phone = profile.phone_number?.replace(/\D/g, "")
+        const phone = profile.phone_number?.replace(/\D/g, "").replace(/^0/, "")
 
         const message = `Hello 👋 I want to order:
 

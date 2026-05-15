@@ -234,7 +234,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
             </div>
 
             {/* ===== STORE INFO BAR ===== */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b-2 border-emerald-200">
+            {/* <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b-2 border-emerald-200">
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                         <div className="flex items-center justify-center gap-3">
@@ -270,7 +270,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* ===== MAIN CONTENT ===== */}
             <div className="flex-1">

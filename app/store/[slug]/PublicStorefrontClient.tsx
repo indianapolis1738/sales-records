@@ -47,7 +47,11 @@ export default function PublicStorefront() {
                 business_name,
                 phone_number,
                 business_address,
-                storefront_banner
+                storefront_banner,
+                business_email,
+                instagram_url,
+                x_url,
+                tiktok_url
             `)
             .eq("storefront_slug", slug)
             .eq("storefront_enabled", true)
@@ -160,10 +164,12 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
             <nav className="sticky top-0 z-40 bg-white border-b-2 border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">
-                                {profile.storefront_name.charAt(0).toUpperCase()}
-                            </span>
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 rounded-full overflow-hidden shadow-lg">
+                            <img
+                                src={profile.storefront_banner}
+                                alt={profile.storefront_name}
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                         <div className="hidden sm:block">
                             <h2 className="font-bold text-slate-900 text-lg">{profile.storefront_name}</h2>
@@ -505,15 +511,21 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                 {profile.storefront_description}
                             </p>
                             <div className="flex gap-3 pt-2">
-                                <a href="#" className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition">
-                                    <Facebook size={18} />
-                                </a>
-                                <a href="#" className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition">
-                                    <Instagram size={18} />
-                                </a>
-                                <a href="#" className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition">
-                                    <Twitter size={18} />
-                                </a>
+                                {profile.instagram_url && (
+                                    <a href={profile.instagram_url} className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition" target="_blank" rel="noopener noreferrer">
+                                        <Instagram size={18} />
+                                    </a>
+                                )}
+                                {profile.x_url && (
+                                    <a href={profile.x_url} className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition" target="_blank" rel="noopener noreferrer">
+                                        <Twitter size={18} />
+                                    </a>
+                                )}
+                                {profile.tiktok_url && (
+                                    <a href={profile.tiktok_url} className="p-2 bg-slate-800 hover:bg-emerald-600 rounded-lg transition" target="_blank" rel="noopener noreferrer">
+                                        <Facebook size={18} />
+                                    </a>
+                                )}
                             </div>
                         </div>
 
@@ -533,8 +545,8 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Mail size={16} />
-                                    <a href="mailto:support@flow.com" className="hover:text-emerald-400 transition">
-                                        support@flow.com
+                                    <a href={`mailto:${profile.business_email || "Email not provided"}`} className="hover:text-emerald-400 transition">
+                                        {profile.business_email || "Email not provided"}
                                     </a>
                                 </li>
                             </ul>

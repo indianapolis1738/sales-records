@@ -11,6 +11,9 @@ import {
   Copy,
   Check,
   ChevronRight,
+  Instagram,
+  Twitter,
+  Music,
 } from "lucide-react"
 
 export default function StorefrontSettingsPage() {
@@ -26,6 +29,9 @@ export default function StorefrontSettingsPage() {
     storefront_description: "",
     storefront_banner: "",
     storefront_enabled: false,
+    instagram_url: "",
+    x_url: "",
+    tiktok_url: "",
   })
 
   useEffect(() => {
@@ -57,6 +63,9 @@ export default function StorefrontSettingsPage() {
         storefront_description: data.storefront_description || "",
         storefront_banner: data.storefront_banner || "",
         storefront_enabled: data.storefront_enabled || false,
+        instagram_url: data.instagram_url || "",
+        x_url: data.x_url || "",
+        tiktok_url: data.tiktok_url || "",
       })
     }
 
@@ -126,6 +135,9 @@ export default function StorefrontSettingsPage() {
         storefront_description: profile.storefront_description,
         storefront_banner: profile.storefront_banner,
         storefront_enabled: profile.storefront_enabled,
+        instagram_url: profile.instagram_url,
+        x_url: profile.x_url,
+        tiktok_url: profile.tiktok_url,
       })
 
       if (error) throw error
@@ -137,10 +149,11 @@ export default function StorefrontSettingsPage() {
       setSaving(false)
     }
   }
- const storefrontUrl =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/store/${profile.storefront_slug}`
-    : ""
+  
+  const storefrontUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/store/${profile.storefront_slug}`
+      : ""
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(storefrontUrl)
@@ -340,7 +353,7 @@ export default function StorefrontSettingsPage() {
               {/* Banner */}
               <div>
                 <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                  Banner Image URL
+                  Banner Image
                 </label>
 
                 <div className="relative">
@@ -353,7 +366,7 @@ export default function StorefrontSettingsPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleBannerUpload}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm"
                   />
                 </div>
               </div>
@@ -374,6 +387,96 @@ export default function StorefrontSettingsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Social Media Links */}
+              <div className="pt-4 border-t border-slate-200 dark:border-neutral-700">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                  Social Media Links
+                </h3>
+
+                <div className="space-y-4">
+                  {/* Instagram */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Instagram URL
+                    </label>
+
+                    <div className="relative">
+                      <Instagram
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="url"
+                        placeholder="https://instagram.com/yourusername"
+                        value={profile.instagram_url}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            instagram_url: e.target.value,
+                          })
+                        }
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* X (Twitter) */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      X (Twitter) URL
+                    </label>
+
+                    <div className="relative">
+                      <Twitter
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="url"
+                        placeholder="https://x.com/yourusername"
+                        value={profile.x_url}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            x_url: e.target.value,
+                          })
+                        }
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* TikTok */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      TikTok URL
+                    </label>
+
+                    <div className="relative">
+                      <Music
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="url"
+                        placeholder="https://tiktok.com/@yourusername"
+                        value={profile.tiktok_url}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            tiktok_url: e.target.value,
+                          })
+                        }
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Save */}
               <div className="pt-4">
@@ -400,6 +503,7 @@ export default function StorefrontSettingsPage() {
               <p>• Customers will be able to view your inventory publicly.</p>
               <p>• Products marked as available will appear automatically.</p>
               <p>• Your storefront can be shared on WhatsApp, Instagram, TikTok and more.</p>
+              <p>• Social media links will be displayed in your storefront footer.</p>
               <p>• You can later add direct checkout, payments and order requests.</p>
             </div>
           </div>

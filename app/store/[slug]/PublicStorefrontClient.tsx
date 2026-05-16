@@ -30,6 +30,8 @@ export default function PublicStorefront() {
     const [showFilters, setShowFilters] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
 
+    const isLowStock = (qty: number) => qty > 0 && qty <= 5
+
     useEffect(() => {
         if (slug) fetchStore()
     }, [slug])
@@ -160,56 +162,61 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
     return (
         <div className="min-h-screen bg-white flex flex-col">
 
-            {/* ===== NAVBAR ===== */}
-            <nav className="sticky top-0 z-40 bg-white border-b-2 border-slate-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 rounded-full overflow-hidden shadow-lg">
-                            <img
-                                src={profile.storefront_banner}
-                                alt={profile.storefront_name}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="hidden sm:block">
-                            <h2 className="font-bold text-slate-900 text-lg">{profile.storefront_name}</h2>
-                            <p className="text-xs text-slate-500">Official Store</p>
-                        </div>
-                    </div>
 
-                    {/* Desktop Nav Links */}
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href="#products" className="text-slate-600 hover:text-emerald-600 font-medium transition">Shop</a>
-                        <a href="#" className="text-slate-600 hover:text-emerald-600 font-medium transition">About</a>
-                        <a href="#footer" className="text-slate-600 hover:text-emerald-600 font-medium transition">Contact</a>
-                    </div>
+{/* ===== NAVBAR ===== */}
+<nav className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-4">
+        {/* Logo Section */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+                <img
+                    src={profile.storefront_banner}
+                    alt={profile.storefront_name}
+                    className="w-full h-full object-cover"
+                />
+            </div>
+            <div className="hidden sm:block min-w-0">
+                <h2 className="font-semibold text-slate-900 text-sm sm:text-base truncate">{profile.storefront_name}</h2>
+                <p className="text-xs text-slate-500">Official Store</p>
+            </div>
+        </div>
 
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-3">
-                        <div className="hidden sm:flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg">
-                            <Heart size={18} className="text-emerald-600" />
-                            <span className="text-sm font-semibold text-slate-900">{wishlist.length}</span>
-                        </div>
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
+            <a href="#products" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Shop</a>
+            <a href="#footer" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Contact</a>
+        </div>
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
-                        >
-                            <Menu size={24} className="text-slate-900" />
-                        </button>
-                    </div>
-                </div>
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <Heart size={16} className="text-emerald-600 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-slate-900">{wishlist.length}</span>
+            </div>
 
-                {/* Mobile Menu */}
-                {mobileMenuOpen && (
-                    <div className="md:hidden border-t-2 border-slate-200 bg-slate-50 p-4 space-y-3">
-                        <a href="#products" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2">Shop</a>
-                        <a href="#" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2">About</a>
-                        <a href="#footer" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2">Contact</a>
-                    </div>
-                )}
-            </nav>
+            {/* Mobile Menu Button */}
+            <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition flex-shrink-0"
+            >
+                <Menu size={22} className="text-slate-900" />
+            </button>
+        </div>
+    </div>
+
+    {/* Mobile Menu */}
+    {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+            <a href="#products" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Shop</a>
+            <a href="#footer" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Contact</a>
+            <div className="flex items-center gap-2 pt-3 border-t border-slate-200">
+                <Heart size={16} className="text-emerald-600" />
+                <span className="text-sm font-semibold">{wishlist.length} in Wishlist</span>
+            </div>
+        </div>
+    )}
+</nav>
+
 
             {/* ===== HERO SECTION ===== */}
             <div className="relative overflow-hidden">

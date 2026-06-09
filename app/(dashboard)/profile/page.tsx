@@ -23,8 +23,8 @@ export default function ProfilePage() {
     account_name?: string
     account_number?: string
 
-    logo_path?: string
-    logo_url?: string
+    avatar_path?: string
+    avatar_url?: string
     plan?: string
   }>({})
   const [message, setMessage] = useState<string | null>(null)
@@ -35,34 +35,39 @@ export default function ProfilePage() {
     !!profile.business_name &&
     !!profile.business_address
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-
-      if (error) setMessage("Failed to load profile")
-      if (profileData) {
-        setProfile(profileData)
-        if (profileData.logo_path) {
-          const { data: signedData } = await supabase.storage
-            .from("logos")
-            .createSignedUrl(profileData.logo_path, 60)
-          if (signedData) {
-            setProfile(prev => ({ ...prev, logo_url: signedData.signedUrl }))
+  
+    useEffect(() => {
+      const fetchProfile = async () => {
+        setLoading(true)
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+  
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single()
+  
+        if (error) setMessage("Failed to load profile")
+        if (profileData) {
+          setProfile(profileData)
+          // If avatar_path is a signed URL, use it directly
+          if (profileData.avatar_path && profileData.avatar_path.startsWith('http')) {
+            setProfile(prev => ({ ...prev, avatar_url: profileData.avatar_path }))
+          } else if (profileData.avatar_path) {
+            // If it's just a file path, create a new signed URL
+            const { data: signedData } = await supabase.storage
+              .from("avatars")
+              .createSignedUrl(profileData.avatar_path, 60 * 60 * 24 * 365)
+            if (signedData) {
+              setProfile(prev => ({ ...prev, avatar_url: signedData.signedUrl }))
+            }
           }
         }
+        setLoading(false)
       }
-      setLoading(false)
-    }
-    fetchProfile()
-  }, [])
+      fetchProfile()
+    }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -80,6 +85,7 @@ export default function ProfilePage() {
       bank_name: profile.bank_name,
       account_name: profile.account_name,
       account_number: profile.account_number,
+      avatar_path: profile.avatar_path,
     }])
 
     setSaving(false)
@@ -104,30 +110,60 @@ export default function ProfilePage() {
     setTimeout(() => setMessage(null), 3000)
   }
 
-  const handleUploadLogo = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleUploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
     const file = e.target.files[0]
-    setUploading(true)
-
-    const filePath = `${Date.now()}_${file.name}`
-    const { error: uploadError } = await supabase.storage
-      .from("logos")
-      .upload(filePath, file, { upsert: true })
-
-    if (uploadError) {
-      setMessage("Failed to upload logo")
-      setUploading(false)
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage("File size must be less than 5MB")
+      setTimeout(() => setMessage(null), 3000)
       return
     }
-
-    const { data: signedData } = await supabase.storage
-      .from("logos")
-      .createSignedUrl(filePath, 60)
-
-    if (signedData) {
-      setProfile(prev => ({ ...prev, logo_path: filePath, logo_url: signedData.signedUrl }))
+  
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please upload an image file")
+      setTimeout(() => setMessage(null), 3000)
+      return
     }
-    setUploading(false)
+  
+    setUploading(true)
+  
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+  
+      const filePath = `${user.id}/avatar.png`
+      
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true })
+  
+      if (uploadError) {
+        setMessage("Failed to upload avatar")
+        setUploading(false)
+        return
+      }
+  
+      const { data: signedData } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365) // 1 year
+  
+      if (signedData) {
+        setProfile(prev => ({ 
+          ...prev, 
+          avatar_path: signedData.signedUrl,
+          avatar_url: signedData.signedUrl 
+        }))
+        setMessage("Avatar uploaded successfully")
+        setTimeout(() => setMessage(null), 3000)
+      }
+    } catch (error) {
+      setMessage("Failed to upload avatar")
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (loading) {
@@ -208,17 +244,17 @@ export default function ProfilePage() {
           {/* Main Profile Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
-            {/* Left Column - Logo & Plan */}
+            {/* Left Column - Avatar & Plan */}
             <div className="lg:col-span-1">
-              {/* Logo Upload */}
+              {/* Avatar Upload */}
               <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-4">Business Logo</h3>
+                <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-4">Business Avatar</h3>
                 <div className="relative group">
-                  {profile.logo_url ? (
+                  {profile.avatar_url ? (
                     <div className="relative">
                       <img
-                        src={profile.logo_url}
-                        alt="Business Logo"
+                        src={profile.avatar_url}
+                        alt="Business Avatar"
                         className="w-full h-24 sm:h-32 object-cover rounded-lg border border-slate-200 dark:border-neutral-700"
                       />
                       <label className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
@@ -226,7 +262,8 @@ export default function ProfilePage() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={handleUploadLogo}
+                          onChange={handleUploadAvatar}
+                          disabled={uploading}
                           className="hidden"
                         />
                       </label>
@@ -234,20 +271,21 @@ export default function ProfilePage() {
                   ) : (
                     <label className="flex flex-col items-center justify-center w-full h-24 sm:h-32 border-2 border-dashed border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-50 dark:hover:bg-neutral-800 transition cursor-pointer">
                       <Upload size={20} className="text-slate-400 mb-2 sm:w-6 sm:h-6" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">Upload Logo</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Upload Avatar</span>
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleUploadLogo}
+                        onChange={handleUploadAvatar}
+                        disabled={uploading}
                         className="hidden"
                       />
                     </label>
                   )}
                 </div>
-                {uploading && <p className="text-xs text-slate-500 mt-2">Uploading...</p>}
+                {uploading && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Uploading...</p>}
               </div>
 
-              {/* Plan plan */}
+              {/* Plan Card */}
               <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl sm:rounded-2xl p-4 sm:p-6">
                 <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-4">Account Plan</h3>
                 <div className="space-y-3">
@@ -328,7 +366,7 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  {/* ---------------- BANK DETAILS ---------------- */}
+                  {/* BANK DETAILS */}
                   <div className="pt-4 sm:pt-6 border-t border-slate-200 dark:border-neutral-800">
                     <div className="mb-4">
                       <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">

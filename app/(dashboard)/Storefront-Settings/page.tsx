@@ -14,6 +14,7 @@ import {
   Instagram,
   Twitter,
   Music,
+  FileText,
 } from "lucide-react"
 
 export default function StorefrontSettingsPage() {
@@ -32,6 +33,7 @@ export default function StorefrontSettingsPage() {
     instagram_url: "",
     x_url: "",
     tiktok_url: "",
+    terms_and_condition: "",
   })
 
   useEffect(() => {
@@ -66,6 +68,7 @@ export default function StorefrontSettingsPage() {
         instagram_url: data.instagram_url || "",
         x_url: data.x_url || "",
         tiktok_url: data.tiktok_url || "",
+        terms_and_condition: data.terms_and_condition || "",
       })
     }
 
@@ -138,6 +141,7 @@ export default function StorefrontSettingsPage() {
         instagram_url: profile.instagram_url,
         x_url: profile.x_url,
         tiktok_url: profile.tiktok_url,
+        terms_and_condition: profile.terms_and_condition,
       })
 
       if (error) throw error
@@ -477,6 +481,38 @@ export default function StorefrontSettingsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Terms and Conditions */}
+              <div className="pt-4 border-t border-slate-200 dark:border-neutral-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-slate-600 dark:text-slate-400" />
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Terms and Conditions
+                  </h3>
+                </div>
+
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Add your terms and conditions
+                </label>
+
+                <textarea
+                  rows={6}
+                  placeholder="Enter your store's terms and conditions... (e.g., payment methods, delivery policies, return policies, etc.)"
+                  value={profile.terms_and_condition}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      terms_and_condition: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 transition font-mono"
+                />
+
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  {profile.terms_and_condition.length} characters • This will be displayed to customers before they order
+                </p>
+              </div>
+
 
               {/* Save */}
               <div className="pt-4">

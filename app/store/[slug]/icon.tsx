@@ -22,11 +22,11 @@ export default async function Icon({
 
   const { data } = await supabase
     .from("profiles")
-    .select("storefront_banner")
+    .select("avatar_path")
     .eq("storefront_slug", slug)
     .single()
 
-  const image = data?.storefront_banner
+  const image = data?.avatar_path
 
   return new ImageResponse(
     (

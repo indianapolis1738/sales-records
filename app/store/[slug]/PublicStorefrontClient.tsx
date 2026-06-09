@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { Phone, MapPin, Package, Search, X, ChevronLeft, ChevronRight, Star, Heart, ShoppingCart, Filter, Facebook, Instagram, Twitter, Mail, Menu } from "lucide-react"
+import { Phone, MapPin, Package, Search, X, ChevronLeft, ChevronRight, Star, Heart, ShoppingCart, Filter, Instagram, Twitter, Mail, Menu } from "lucide-react"
 
 const ITEMS_PER_PAGE = 12
 
@@ -17,6 +17,7 @@ export default function PublicStorefront() {
     const [products, setProducts] = useState<any[]>([])
 
     const [selectedProduct, setSelectedProduct] = useState<any>(null)
+    const [showTermsModal, setShowTermsModal] = useState(false)
     const [activeImageIndex, setActiveImageIndex] = useState(0)
     const [quantity, setQuantity] = useState(1)
     const [wishlist, setWishlist] = useState<string[]>([])
@@ -53,7 +54,9 @@ export default function PublicStorefront() {
                 business_email,
                 instagram_url,
                 x_url,
-                tiktok_url
+                tiktok_url,
+                terms_and_condition,
+                avatar_path
             `)
             .eq("storefront_slug", slug)
             .eq("storefront_enabled", true)
@@ -127,10 +130,10 @@ export default function PublicStorefront() {
 
         const message = `Hello 👋 I want to order:
 
-Product: ${product.product_name}
-Price: ₦${Number(product.sales_price).toLocaleString()}
-Quantity: ${qty}
-Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
+            Product: ${product.product_name}
+            Price: ₦${Number(product.sales_price).toLocaleString()}
+            Quantity: ${qty}
+            Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
 
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
         window.open(url, "_blank")
@@ -170,7 +173,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
                             <img
-                                src={profile.storefront_banner}
+                                src={profile.avatar_path}
                                 alt={profile.storefront_name}
                                 className="w-full h-full object-cover"
                             />
@@ -478,8 +481,8 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                                         key={pageNum}
                                                         onClick={() => setCurrentPage(pageNum)}
                                                         className={`px-3 py-2 rounded-lg font-bold transition text-sm sm:text-base ${isActive
-                                                                ? "bg-emerald-600 text-white"
-                                                                : "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                                                            ? "bg-emerald-600 text-white"
+                                                            : "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
                                                             }`}
                                                     >
                                                         {pageNum}
@@ -573,15 +576,22 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                         </div>
 
                         {/* Info */}
-                        {/* <div className="space-y-4">
-                            <h3 className="font-bold text-lg text-emerald-400">Info</h3>
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-lg text-emerald-400">Legal</h3>
                             <ul className="space-y-2 text-slate-300 text-sm">
-                                <li><a href="#" className="hover:text-emerald-400 transition">About Us</a></li>
+                                {profile.terms_and_condition && (
+                                    <li>
+                                        <button
+                                            onClick={() => setShowTermsModal(true)}
+                                            className="hover:text-emerald-400 transition text-left"
+                                        >
+                                            Terms & Conditions
+                                        </button>
+                                    </li>
+                                )}
                                 <li><a href="#" className="hover:text-emerald-400 transition">Privacy Policy</a></li>
-                                <li><a href="#" className="hover:text-emerald-400 transition">Terms of Service</a></li>
-                                <li><a href="#" className="hover:text-emerald-400 transition">FAQ</a></li>
                             </ul>
-                        </div> */}
+                        </div>
                     </div>
 
                     {/* Bottom Bar */}
@@ -591,6 +601,8 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                     </div>
                 </div>
             </footer>
+
+
 
             {/* ===== PRODUCT DETAIL MODAL ===== */}
             {selectedProduct && (
@@ -716,6 +728,56 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                         Continue Shopping
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* ===== TERMS & CONDITIONS MODAL ===== */}
+            {showTermsModal && profile.terms_and_condition && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-white max-w-2xl w-full rounded-xl overflow-hidden shadow-lg max-h-[90vh] overflow-y-auto">
+
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowTermsModal(false)}
+                            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow hover:shadow-md transition z-10"
+                        >
+                            <X size={20} className="text-slate-600" />
+                        </button>
+
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 sm:px-8 py-6 sm:py-8">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                                Terms & Conditions
+                            </h2>
+                            <p className="text-emerald-100 text-sm mt-1">
+                                {profile.storefront_name}
+                            </p>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 sm:p-8 space-y-4">
+                            <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                {profile.terms_and_condition}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-6 border-t border-slate-200">
+                                <button
+                                    onClick={() => setShowTermsModal(false)}
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition"
+                                >
+                                    I Agree
+                                </button>
+                                <button
+                                    onClick={() => setShowTermsModal(false)}
+                                    className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-3 rounded-lg transition"
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>

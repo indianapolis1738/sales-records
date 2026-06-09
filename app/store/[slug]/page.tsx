@@ -27,7 +27,8 @@ export async function generateMetadata(
       .select(`
         storefront_name,
         storefront_description,
-        storefront_banner
+        storefront_banner,
+        avatar_path
       `)
       .eq("storefront_slug", slug)
       .eq("storefront_enabled", true)
@@ -51,7 +52,7 @@ export async function generateMetadata(
       `Shop amazing products from ${data.storefront_name}`
 
     const image =
-      data.storefront_banner || `${SITE_URL}/og-image.png`
+      data.avatar_path || `${SITE_URL}/og-image.png`
 
     const url = `${SITE_URL}/store/${slug}`
 

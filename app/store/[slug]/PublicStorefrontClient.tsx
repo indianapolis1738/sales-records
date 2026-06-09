@@ -163,59 +163,59 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
         <div className="min-h-screen bg-white flex flex-col">
 
 
-{/* ===== NAVBAR ===== */}
-<nav className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-4">
-        {/* Logo Section */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
-                <img
-                    src={profile.storefront_banner}
-                    alt={profile.storefront_name}
-                    className="w-full h-full object-cover"
-                />
-            </div>
-            <div className="hidden sm:block min-w-0">
-                <h2 className="font-semibold text-slate-900 text-sm sm:text-base truncate">{profile.storefront_name}</h2>
-                <p className="text-xs text-slate-500">Official Store</p>
-            </div>
-        </div>
+            {/* ===== NAVBAR ===== */}
+            <nav className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-4">
+                    {/* Logo Section */}
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+                            <img
+                                src={profile.storefront_banner}
+                                alt={profile.storefront_name}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="hidden sm:block min-w-0">
+                            <h2 className="font-semibold text-slate-900 text-sm sm:text-base truncate">{profile.storefront_name}</h2>
+                            <p className="text-xs text-slate-500">Official Store</p>
+                        </div>
+                    </div>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            <a href="#products" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Shop</a>
-            <a href="#footer" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Contact</a>
-        </div>
+                    {/* Desktop Nav Links */}
+                    <div className="hidden md:flex items-center gap-6 lg:gap-8">
+                        <a href="#products" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Shop</a>
+                        <a href="#footer" className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition">Contact</a>
+                    </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                <Heart size={16} className="text-emerald-600 flex-shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-slate-900">{wishlist.length}</span>
-            </div>
+                    {/* Right Actions */}
+                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        <div className="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <Heart size={16} className="text-emerald-600 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm font-semibold text-slate-900">{wishlist.length}</span>
+                        </div>
 
-            {/* Mobile Menu Button */}
-            <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition flex-shrink-0"
-            >
-                <Menu size={22} className="text-slate-900" />
-            </button>
-        </div>
-    </div>
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition flex-shrink-0"
+                        >
+                            <Menu size={22} className="text-slate-900" />
+                        </button>
+                    </div>
+                </div>
 
-    {/* Mobile Menu */}
-    {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
-            <a href="#products" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Shop</a>
-            <a href="#footer" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Contact</a>
-            <div className="flex items-center gap-2 pt-3 border-t border-slate-200">
-                <Heart size={16} className="text-emerald-600" />
-                <span className="text-sm font-semibold">{wishlist.length} in Wishlist</span>
-            </div>
-        </div>
-    )}
-</nav>
+                {/* Mobile Menu */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+                        <a href="#products" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Shop</a>
+                        <a href="#footer" className="block text-slate-900 hover:text-emerald-600 font-medium transition py-2 text-sm">Contact</a>
+                        <div className="flex items-center gap-2 pt-3 border-t border-slate-200">
+                            <Heart size={16} className="text-emerald-600" />
+                            <span className="text-sm font-semibold">{wishlist.length} in Wishlist</span>
+                        </div>
+                    </div>
+                )}
+            </nav>
 
 
             {/* ===== HERO SECTION ===== */}
@@ -302,19 +302,19 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                         </div>
 
                         {/* Filter Controls */}
-                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
+                        <div className="flex flex-wrap gap-3 items-center">
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition font-semibold text-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-50 transition font-medium text-sm sm:text-base"
                             >
-                                <Filter size={18} />
+                                <Filter size={16} />
                                 Filters
                             </button>
 
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as any)}
-                                className="px-5 py-2.5 bg-white border-2 border-emerald-600 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-semibold cursor-pointer"
+                                className="px-4 py-2 bg-white border border-emerald-600 text-slate-900 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base font-medium cursor-pointer"
                             >
                                 <option value="default">Sort: Default</option>
                                 <option value="low">Price: Low → High</option>
@@ -329,13 +329,13 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                         setMinPrice("")
                                         setMaxPrice("")
                                     }}
-                                    className="px-5 py-2.5 bg-red-50 border-2 border-red-300 text-red-700 hover:bg-red-100 rounded-lg transition font-semibold text-sm"
+                                    className="px-4 py-2 bg-red-50 border border-red-300 text-red-700 hover:bg-red-100 rounded-md transition font-medium text-sm sm:text-base"
                                 >
                                     ✕ Clear Filters
                                 </button>
                             )}
 
-                            <div className="text-sm text-slate-600 font-semibold sm:ml-auto">
+                            <div className="text-sm sm:text-base text-slate-600 font-medium sm:ml-auto">
                                 Showing <span className="text-emerald-600 font-bold">{paginatedProducts.length}</span> of <span className="text-emerald-600 font-bold">{filteredProducts.length}</span> products
                             </div>
                         </div>
@@ -369,20 +369,20 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                 <div className="max-w-7xl mx-auto px-4 mb-16">
                     {filteredProducts.length === 0 ? (
                         <div className="text-center py-20">
-                            <Package size={56} className="text-slate-300 mx-auto mb-4" />
-                            <h3 className="text-2xl font-bold text-slate-900 mb-2">No products found</h3>
-                            <p className="text-slate-600">Try adjusting your search or filters</p>
+                            <Package size={48} className="text-slate-300 mx-auto mb-4" />
+                            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">No products found</h3>
+                            <p className="text-sm sm:text-base text-slate-600">Try adjusting your search or filters</p>
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {paginatedProducts.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="group bg-white border-2 border-slate-200 rounded-xl overflow-hidden hover:shadow-2xl hover:border-emerald-500 transition-all duration-300 cursor-pointer"
+                                        className="group bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-emerald-500 transition-all duration-300 cursor-pointer"
                                     >
                                         {/* Product Image */}
-                                        <div className="relative h-56 bg-slate-100 overflow-hidden">
+                                        <div className="relative h-36 sm:h-48 bg-slate-100 overflow-hidden">
                                             {item.product_images?.length ? (
                                                 <img
                                                     src={item.product_images[0]}
@@ -391,41 +391,41 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                                 />
                                             ) : (
                                                 <div className="flex items-center justify-center h-full bg-slate-200">
-                                                    <Package size={40} className="text-slate-400" />
+                                                    <Package size={28} className="text-slate-400" />
                                                 </div>
                                             )}
 
                                             {/* Wishlist Button */}
                                             <button
                                                 onClick={() => toggleWishlist(item.id)}
-                                                className="absolute top-3 right-3 p-2.5 bg-white rounded-full shadow-lg hover:shadow-xl transition z-10 hover:scale-110"
+                                                className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition z-10 hover:scale-110"
                                             >
                                                 <Heart
-                                                    size={20}
+                                                    size={16}
                                                     className={wishlist.includes(item.id) ? "fill-red-500 text-red-500" : "text-slate-400"}
                                                 />
                                             </button>
 
                                             {/* Stock Badge */}
                                             {item.quantity < 5 && (
-                                                <div className="absolute bottom-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                                                <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                                                     Only {item.quantity} left
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Product Info */}
-                                        <div className="p-4 space-y-3">
-                                            <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-emerald-600 transition text-base">
+                                        <div className="p-2 sm:p-3 space-y-2">
+                                            <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-emerald-600 transition text-sm sm:text-base">
                                                 {item.product_name}
                                             </h3>
 
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
                                                 <div className="flex gap-0.5">
                                                     {[...Array(5)].map((_, i) => (
                                                         <Star
                                                             key={i}
-                                                            size={14}
+                                                            size={12}
                                                             className={i < 4 ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}
                                                         />
                                                     ))}
@@ -433,8 +433,8 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                                 <span className="text-xs text-slate-500 font-semibold">(24)</span>
                                             </div>
 
-                                            <div className="flex items-baseline gap-2">
-                                                <p className="text-2xl font-bold text-emerald-600">
+                                            <div className="flex items-baseline gap-1">
+                                                <p className="text-base sm:text-lg font-bold text-emerald-600">
                                                     ₦{Number(item.sales_price).toLocaleString()}
                                                 </p>
                                             </div>
@@ -445,9 +445,9 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                                     setActiveImageIndex(0)
                                                     setQuantity(1)
                                                 }}
-                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2"
+                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-md transition flex items-center justify-center gap-1 text-sm sm:text-base"
                                             >
-                                                <ShoppingCart size={18} />
+                                                <ShoppingCart size={16} />
                                                 View & Order
                                             </button>
                                         </div>
@@ -457,16 +457,16 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
 
                             {/* ===== PAGINATION ===== */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-center gap-2 mt-12">
+                                <div className="flex items-center justify-center gap-2 mt-8 sm:mt-12">
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
-                                        className="p-2.5 border-2 border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                        className="p-2 border-2 border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base"
                                     >
                                         <ChevronLeft size={20} />
                                     </button>
 
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1 sm:gap-2">
                                         {Array.from({ length: totalPages }).map((_, idx) => {
                                             const pageNum = idx + 1
                                             const isActive = pageNum === currentPage
@@ -477,11 +477,10 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                                     <button
                                                         key={pageNum}
                                                         onClick={() => setCurrentPage(pageNum)}
-                                                        className={`px-4 py-2.5 rounded-lg font-bold transition ${
-                                                            isActive
+                                                        className={`px-3 py-2 rounded-lg font-bold transition text-sm sm:text-base ${isActive
                                                                 ? "bg-emerald-600 text-white"
                                                                 : "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -496,7 +495,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
-                                        className="p-2.5 border-2 border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                        className="p-2 border-2 border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base"
                                     >
                                         <ChevronRight size={20} />
                                     </button>
@@ -574,7 +573,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                         </div>
 
                         {/* Info */}
-                        <div className="space-y-4">
+                        {/* <div className="space-y-4">
                             <h3 className="font-bold text-lg text-emerald-400">Info</h3>
                             <ul className="space-y-2 text-slate-300 text-sm">
                                 <li><a href="#" className="hover:text-emerald-400 transition">About Us</a></li>
@@ -582,7 +581,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                 <li><a href="#" className="hover:text-emerald-400 transition">Terms of Service</a></li>
                                 <li><a href="#" className="hover:text-emerald-400 transition">FAQ</a></li>
                             </ul>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Bottom Bar */}
@@ -596,21 +595,21 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
             {/* ===== PRODUCT DETAIL MODAL ===== */}
             {selectedProduct && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-                    <div className="bg-white max-w-3xl w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white max-w-lg w-full rounded-xl overflow-hidden shadow-lg max-h-[90vh] overflow-y-auto">
 
                         {/* Close Button */}
                         <button
                             onClick={() => setSelectedProduct(null)}
-                            className="absolute top-4 right-4 p-2.5 bg-white rounded-full shadow-lg hover:shadow-xl transition z-10"
+                            className="absolute top-3 right-3 p-2 bg-white rounded-full shadow hover:shadow-md transition"
                         >
-                            <X size={24} className="text-slate-600" />
+                            <X size={20} className="text-slate-600" />
                         </button>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-6 sm:p-8">
+                        <div className="grid grid-cols-1 gap-6 p-4">
 
                             {/* Image Gallery */}
-                            <div className="space-y-4">
-                                <div className="relative bg-slate-100 rounded-xl overflow-hidden h-96">
+                            <div className="space-y-3">
+                                <div className="relative bg-slate-100 rounded-lg overflow-hidden h-64">
                                     {selectedProduct.product_images?.length ? (
                                         <img
                                             src={selectedProduct.product_images[activeImageIndex]}
@@ -619,7 +618,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                         />
                                     ) : (
                                         <div className="flex items-center justify-center h-full">
-                                            <Package size={48} className="text-slate-300" />
+                                            <Package size={32} className="text-slate-300" />
                                         </div>
                                     )}
 
@@ -628,15 +627,15 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                         <>
                                             <button
                                                 onClick={() => setActiveImageIndex(prev => prev === 0 ? selectedProduct.product_images.length - 1 : prev - 1)}
-                                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2.5 rounded-full transition shadow-lg"
+                                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full transition shadow"
                                             >
-                                                <ChevronLeft size={20} className="text-slate-900" />
+                                                <ChevronLeft size={16} className="text-slate-900" />
                                             </button>
                                             <button
                                                 onClick={() => setActiveImageIndex(prev => prev === selectedProduct.product_images.length - 1 ? 0 : prev + 1)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2.5 rounded-full transition shadow-lg"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full transition shadow"
                                             >
-                                                <ChevronRight size={20} className="text-slate-900" />
+                                                <ChevronRight size={16} className="text-slate-900" />
                                             </button>
                                         </>
                                     )}
@@ -649,7 +648,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                                             <button
                                                 key={idx}
                                                 onClick={() => setActiveImageIndex(idx)}
-                                                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-3 transition ${activeImageIndex === idx ? "border-emerald-600" : "border-slate-300"}`}
+                                                className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition ${activeImageIndex === idx ? "border-emerald-600" : "border-slate-300"}`}
                                             >
                                                 <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                                             </button>
@@ -659,86 +658,52 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
                             </div>
 
                             {/* Product Details */}
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-slate-900 mb-3">
+                                    <h2 className="text-xl font-bold text-slate-900">
                                         {selectedProduct.product_name}
                                     </h2>
-
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="flex gap-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    size={18}
-                                                    className={i < 4 ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="text-base text-slate-600 font-semibold">(24 reviews)</span>
-                                    </div>
-
-                                    <p className="text-5xl font-bold text-emerald-600 mb-3">
+                                    <p className="text-lg font-bold text-emerald-600">
                                         ₦{Number(selectedProduct.sales_price).toLocaleString()}
                                     </p>
-
-                                    <p className={`text-base font-bold ${selectedProduct.quantity > 5 ? "text-green-600" : "text-orange-600"}`}>
-                                        {selectedProduct.quantity > 5 ? "✓ In Stock" : `⚠ Only ${selectedProduct.quantity} in stock`}
+                                    <p className={`text-sm font-medium ${selectedProduct.quantity > 5 ? "text-green-600" : "text-orange-600"}`}>
+                                        {selectedProduct.quantity > 5 ? "In Stock" : `Only ${selectedProduct.quantity} left`}
                                     </p>
                                 </div>
 
                                 {/* Quantity Selector */}
-                                <div className="space-y-3">
-                                    <label className="block text-base font-bold text-slate-900">Quantity</label>
-                                    <div className="flex items-center border-2 border-slate-300 rounded-lg w-fit">
-                                        <button
-                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            className="px-4 py-3 text-slate-600 hover:bg-slate-100 transition font-bold text-lg"
-                                        >
-                                            −
-                                        </button>
-                                        <span className="px-6 py-3 font-bold text-slate-900 text-lg">{quantity}</span>
-                                        <button
-                                            onClick={() => setQuantity(Math.min(selectedProduct.quantity, quantity + 1))}
-                                            className="px-4 py-3 text-slate-600 hover:bg-slate-100 transition font-bold text-lg"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Product Details */}
-                                <div className="space-y-3 pb-4 border-b-2 border-slate-200">
-                                    {selectedProduct.sku && (
-                                        <p className="text-base text-slate-700">
-                                            <span className="font-bold">SKU:</span> <span className="text-slate-600">{selectedProduct.sku}</span>
-                                        </p>
-                                    )}
-                                    {selectedProduct.imei && (
-                                        <p className="text-base text-slate-700">
-                                            <span className="font-bold">IMEI:</span> <span className="text-slate-600">{selectedProduct.imei}</span>
-                                        </p>
-                                    )}
+                                <div className="flex items-center border border-slate-300 rounded-lg w-fit">
+                                    <button
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="px-3 py-2 text-slate-600 hover:bg-slate-100 transition font-bold"
+                                    >
+                                        −
+                                    </button>
+                                    <span className="px-4 py-2 font-bold text-slate-900">{quantity}</span>
+                                    <button
+                                        onClick={() => setQuantity(Math.min(selectedProduct.quantity, quantity + 1))}
+                                        className="px-3 py-2 text-slate-600 hover:bg-slate-100 transition font-bold"
+                                    >
+                                        +
+                                    </button>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     <button
                                         onClick={() => handleWhatsAppOrder(selectedProduct, quantity)}
-                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 text-lg"
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
                                     >
-                                        <ShoppingCart size={22} />
+                                        <ShoppingCart size={18} />
                                         Order on WhatsApp
                                     </button>
 
                                     <button
-                                        onClick={() => {
-                                            toggleWishlist(selectedProduct.id)
-                                        }}
-                                        className="w-full border-3 border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 text-lg"
+                                        onClick={() => toggleWishlist(selectedProduct.id)}
+                                        className="w-full border border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
                                     >
                                         <Heart
-                                            size={22}
+                                            size={18}
                                             className={wishlist.includes(selectedProduct.id) ? "fill-current" : ""}
                                         />
                                         {wishlist.includes(selectedProduct.id) ? "Added to Wishlist" : "Add to Wishlist"}
@@ -746,7 +711,7 @@ Total: ₦${(Number(product.sales_price) * qty).toLocaleString()}`
 
                                     <button
                                         onClick={() => setSelectedProduct(null)}
-                                        className="w-full bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-3 rounded-xl transition"
+                                        className="w-full bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 rounded-lg transition"
                                     >
                                         Continue Shopping
                                     </button>

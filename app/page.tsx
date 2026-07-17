@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { signIn, signUp } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { Mail, Lock, User, Phone, Building2, Eye, EyeOff, ArrowRight, CheckCircle } from "lucide-react"
 import GoogleButton from "@/components/GoogleButton"
+import { supabase } from "@/lib/supabase"
 
 export default function AuthPage() {
   const router = useRouter()
@@ -70,6 +71,22 @@ export default function AuthPage() {
       setError(error.message || "Signup failed")
     }
   }
+  
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+  
+      console.log("Session:", session);
+  
+      if (session) {
+        router.replace("/home");
+      }
+    };
+  
+    checkSession();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 md:p-4 relative overflow-hidden">

@@ -678,7 +678,7 @@ export default function InventoryPage() {
                     <input
                       type="file"
                       accept="image/*"
-                      capture="environment"
+                      // capture="environment"
                       multiple
                       className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 dark:file:bg-neutral-800/50 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-200 dark:hover:file:bg-neutral-700 transition"
                       onChange={(e) => handleImageUpload(e, editingItem)}

@@ -29,11 +29,11 @@ export default function AddSale() {
       customer_name: "",
       product_id: "",
       product_name: "",
-      quantity: "1",
+      quantity: "0",
       cost_price: "",
       sales_price: "",
       status: "Unpaid",
-      outstanding: "",
+      outstanding: "0",
       serial_number: "",
       imei: ""
     }
@@ -81,13 +81,48 @@ export default function AddSale() {
 
   const handleChange = (rowIndex: number, field: string, value: string) => {
     const newRows = [...salesRows]
-    newRows[rowIndex][field as keyof typeof newRows[number]] = value
+
+    newRows[rowIndex] = {
+      ...newRows[rowIndex],
+      [field]: value,
+    }
+
+    const row = newRows[rowIndex]
+
+    // Calculate invoice amount for this row
+    const total =
+      (Number(row.sales_price) || 0) *
+      (Number(row.quantity) || 0)
+
+    // Auto update outstanding
+    if (field === "status") {
+      if (value === "Paid") {
+        row.outstanding = "0"
+      }
+
+      if (value === "Unpaid") {
+        row.outstanding = total.toString()
+      }
+
+      // Leave Part Payment unchanged so user can type it
+    }
+
+    // If quantity or sales price changes while Unpaid
+    if (
+      (field === "quantity" || field === "sales_price") &&
+      row.status === "Unpaid"
+    ) {
+      row.outstanding = total.toString()
+    }
+
     setSalesRows(newRows)
+
+
   }
 
   const addRow = () => {
     const firstRowCustomer = salesRows[0]
-    
+
     setSalesRows([
       ...salesRows,
       {
@@ -114,7 +149,7 @@ export default function AddSale() {
   }
 
   const generateInvoiceNumber = () => {
-    return `INV-${Date.now()}`
+    return `INV-${Math.floor(Math.random() * 9000) + 1000}`
   }
 
   const calculateProfit = (costPrice: string, salesPrice: string, quantity: string) => {
@@ -222,7 +257,9 @@ export default function AddSale() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
         <div className="max-w-5xl mx-auto">
-          
+          <button onClick={() => router.push("/sales")} className="flex items-center gap-2 mb-6 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+            <X size={16} /> Back to Sales
+          </button>
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">
@@ -297,7 +334,7 @@ export default function AddSale() {
           <div className="space-y-4 mb-8">
             {salesRows.map((row, index) => (
               <div key={index} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm hover:border-slate-300 dark:hover:border-neutral-700 transition overflow-hidden">
-                
+
                 {/* Item Header */}
                 <div className="bg-slate-50 dark:bg-neutral-800/50 px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -415,8 +452,14 @@ export default function AddSale() {
                         type="number"
                         placeholder="0.00"
                         value={row.outstanding}
+                        disabled={row.status === "Paid" || row.status === "Unpaid"}
                         onChange={e => handleChange(index, "outstanding", e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition"
+                        className={`w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 py-2.5 text-sm
+                          ${row.status === "Paid" || row.status === "Unpaid"
+                            ? "bg-slate-100 dark:bg-neutral-700 cursor-not-allowed"
+                            : "bg-white dark:bg-neutral-800"
+                          }
+                          text-slate-900 dark:text-white`}
                       />
                     </div>
                   </div>
@@ -424,7 +467,7 @@ export default function AddSale() {
                   {/* Serial Number / Notes */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
-                      Serial Number / Notes
+                      Notes
                     </label>
                     <input
                       type="text"
@@ -532,11 +575,11 @@ function CustomerModal({ newCustomer, setNewCustomer, setCustomerModalOpen, fetc
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div 
+      <div
         className="bg-white dark:bg-neutral-900 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-neutral-800 p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto"
         onKeyDown={handleKeyDown}
       >
-        
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">

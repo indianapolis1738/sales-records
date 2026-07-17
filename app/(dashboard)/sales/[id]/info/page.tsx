@@ -27,6 +27,12 @@ export default function SaleInfo() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
+
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+const [paymentAmount, setPaymentAmount] = useState("")
+const [savingPayment, setSavingPayment] = useState(false)
+
   const receiptRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -281,6 +287,60 @@ export default function SaleInfo() {
     setEditItems(updated)
   }
 
+
+const receivePayment = async () => {
+  if (!paymentAmount) return
+
+  setSavingPayment(true)
+
+  const amount = Number(paymentAmount)
+
+  const outstanding = Number(invoice.outstanding)
+
+  if (amount <= 0) {
+    alert("Invalid amount")
+    setSavingPayment(false)
+    return
+  }
+
+  if (amount > outstanding) {
+    alert("Payment is greater than outstanding balance")
+    setSavingPayment(false)
+    return
+  }
+
+  const newOutstanding = outstanding - amount
+
+  let status = "Part Payment"
+
+  if (newOutstanding <= 0) {
+    status = "Paid"
+  }
+
+  const { error } = await supabase
+    .from("sales")
+    .update({
+      outstanding: newOutstanding,
+      status,
+    })
+    .eq("id", invoice.id)
+
+  if (error) {
+    alert(error.message)
+  } else {
+    setInvoice({
+      ...invoice,
+      outstanding: newOutstanding,
+      status,
+    })
+
+    setPaymentAmount("")
+    setShowPaymentModal(false)
+  }
+
+  setSavingPayment(false)
+}
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
@@ -474,17 +534,14 @@ export default function SaleInfo() {
             {/* Footer Actions */}
             <div className="px-6 sm:px-8 py-6 sm:py-8 bg-slate-50 dark:bg-neutral-800/50 border-t border-slate-200 dark:border-neutral-800">
               <div className="flex flex-col sm:flex-row gap-3">
-                {invoice.status !== "Paid" && (
-                  <button
-                    onClick={markAsPaid}
-                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition active:scale-95"
-                  >
-                    <CheckCircle size={18} />
-                    <span className="hidden sm:inline">Mark as Paid</span>
-                    <span className="sm:hidden">Paid</span>
-                  </button>
-                )}
-
+              {invoice.status !== "Paid" && (
+  <button
+    onClick={() => setShowPaymentModal(true)}
+    className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+  >
+    Receive Payment
+  </button>
+)}
                 <button
                   onClick={() => setShowEditModal(true)}
                   className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition active:scale-95"
@@ -515,6 +572,63 @@ export default function SaleInfo() {
           </div>
 
         </div>
+
+        {/* Payment Modals */}
+
+        {showPaymentModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    <div className="bg-white dark:bg-neutral-900 rounded-2xl w-full max-w-md p-6">
+
+      <h3 className="text-xl font-bold mb-4">
+        Receive Payment
+      </h3>
+
+      <div className="space-y-3">
+
+        <div>
+          <p className="text-sm text-slate-500">
+            Outstanding Balance
+          </p>
+
+          <p className="text-2xl font-bold">
+            ₦{Number(invoice.outstanding).toLocaleString()}
+          </p>
+        </div>
+
+        <input
+          type="number"
+          placeholder="Enter amount received"
+          value={paymentAmount}
+          onChange={(e)=>setPaymentAmount(e.target.value)}
+          className="w-full border rounded-lg px-4 py-3"
+        />
+
+      </div>
+
+      <div className="flex gap-3 mt-6">
+
+        <button
+          onClick={()=>setShowPaymentModal(false)}
+          className="flex-1 border rounded-lg py-3"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={receivePayment}
+          disabled={savingPayment}
+          className="flex-1 bg-green-600 text-white rounded-lg py-3"
+        >
+          {savingPayment ? "Saving..." : "Receive"}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
         {/* Hidden PDF Invoice */}
         <div
@@ -580,17 +694,6 @@ export default function SaleInfo() {
               <p style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>
                 {invoice.customer_name}
               </p>
-              {/* <div style={{
-                backgroundColor: "#f1f5f9",
-                padding: "12px",
-                borderRadius: "6px",
-                marginTop: 8,
-                border: "1px solid #e2e8f0"
-              }}>
-                <p style={{ margin: "0", fontSize: "12px", color: "#475569" }}>
-                  Customer Order
-                </p>
-              </div> */}
             </div>
 
             <div style={{ flex: 1 }}>

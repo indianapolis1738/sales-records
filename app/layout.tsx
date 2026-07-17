@@ -1,3 +1,4 @@
+import { CartProvider } from "./context/CartContext"
 import "./globals.css"
 
 export default function RootLayout({
@@ -7,7 +8,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+      <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   )
 }

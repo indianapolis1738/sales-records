@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/ProtectedRoute"
@@ -20,6 +20,8 @@ export default function AddSale() {
     phone_number: "",
     status: "Prospect"
   })
+  const [customerOpen, setCustomerOpen] = useState(false)
+  const [customerSearch, setCustomerSearch] = useState("")
 
   // 🔹 MULTI SALE ROWS
   const [salesRows, setSalesRows] = useState([
@@ -63,6 +65,29 @@ export default function AddSale() {
       .eq("user_id", user.id)
     setCustomers(data || [])
   }
+
+  const filteredCustomers = customers.filter(c =>
+    c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone_number?.includes(customerSearch)
+  )
+
+  const customerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        customerRef.current &&
+        !customerRef.current.contains(e.target as Node)
+      ) {
+        setCustomerOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handler)
+
+    return () =>
+      document.removeEventListener("mousedown", handler)
+  }, [])
 
   const handleProductSelect = (rowIndex: number, id: string) => {
     const item = inventory.find(i => i.id === id)
@@ -296,24 +321,79 @@ export default function AddSale() {
                     Customer
                   </label>
                   <div className="relative">
-                    <select
-                      value={salesRows[0].customer_id}
-                      onChange={e => {
-                        const c = customers.find(c => c.id === e.target.value)
-                        if (!c) return
-                        handleChange(0, "customer_id", c.id)
-                        handleChange(0, "customer_name", c.full_name)
-                      }}
-                      className="w-full rounded-lg border border-slate-300 dark:border-neutral-700 px-3 sm:px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition appearance-none"
-                    >
-                      <option value="">Select Customer</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.full_name} • {c.status}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 dark:text-slate-600 pointer-events-none" />
+                    <div ref={customerRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setCustomerOpen(!customerOpen)}
+                        className="w-full flex items-center justify-between rounded-lg border border-slate-300 dark:border-neutral-700 px-4 py-2.5 bg-white dark:bg-neutral-800"
+                      >
+                        <span>
+                          {salesRows[0].customer_name || "Select Customer"}
+                        </span>
+
+                        <ChevronDown
+                          size={18}
+                          className={`transition ${customerOpen ? "rotate-180" : ""
+                            }`}
+                        />
+                      </button>
+
+                      {customerOpen && (
+                        <div className="absolute z-50 mt-2 w-full rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-xl">
+
+                          <div className="p-2 border-b dark:border-neutral-700">
+                            <input
+                              placeholder="Search customer..."
+                              value={customerSearch}
+                              onChange={(e) => setCustomerSearch(e.target.value)}
+                              className="w-full rounded-lg border px-3 py-2 bg-transparent"
+                            />
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto">
+
+                            {filteredCustomers.length === 0 && (
+                              <div className="p-4 text-sm text-slate-500">
+                                No customers found
+                              </div>
+                            )}
+
+                            {filteredCustomers.map(customer => (
+                              <button
+                                key={customer.id}
+                                type="button"
+                                onClick={() => {
+                                  setSalesRows(prev => {
+                                    const rows = [...prev]
+
+                                    rows[0] = {
+                                      ...rows[0],
+                                      customer_id: customer.id,
+                                      customer_name: customer.full_name,
+                                    }
+
+                                    return rows
+                                  })
+
+                                  setCustomerOpen(false)
+                                  setCustomerSearch("")
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-neutral-800"
+                              >
+                                <div className="font-medium">
+                                  {customer.full_name}
+                                </div>
+
+                                <div className="text-xs text-slate-500">
+                                  {customer.phone_number} • {customer.status}
+                                </div>
+                              </button>
+                            ))}
+
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
